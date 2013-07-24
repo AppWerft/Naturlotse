@@ -111,7 +111,7 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 	});
 }
 
-Dichotom.prototype.getAll = function(_args) {
+Dichotom.prototype.getAllDichotoms = function(_args) {
 	if (Ti.App.Properties.hasProperty('dichotoms')) {
 		console.log('DICHOTOMs exists');
 		var dichotomsstring = Ti.App.Properties.getString('dichotoms');
@@ -146,11 +146,12 @@ Dichotom.prototype.getAll = function(_args) {
 				dialog.show();
 			}
 			var dichotoms = xml.toObject(xml).Wiki.Page;
-			console.log(dichotoms);
-			_args.onload(dichotoms);
-			if (md5 && md5 !== Ti.Utils.md5HexDigest(dichotoms)) {console.log('refresh DICHOTOMs');
+
+			if (!md5 || md5 !== Ti.Utils.md5HexDigest(dichotoms)) {
+				console.log('refresh DICHOTOMs');
 				Ti.App.Properties.setString('dichotoms', JSON.stringify(dichotoms));
 			}
+			_args.onload(dichotoms);
 		},
 		onerror : function() {
 			console.log(this.error);

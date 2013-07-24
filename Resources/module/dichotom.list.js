@@ -17,8 +17,11 @@ exports.create = function() {
 		layout : 'vertical'
 	});
 	self.add(tv);
-	var list = Ti.App.Dichotom.getAll({
+	self.actind.show();
+	self.actind.setMessage('Aktualisiere des Naturpiloten.');
+	var list = Ti.App.Dichotom.getAllDichotoms({
 		onload : function(_list) {
+			self.actind.hide();
 			if (!_list) {
 				self.close();
 			}

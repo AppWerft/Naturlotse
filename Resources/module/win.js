@@ -38,9 +38,12 @@ exports.create = function(_title) {
 	});
 	function onScann(_e) {
 		var rest = parseInt(_e.imagecounter.images) - parseInt(_e.imagecounter.found);
-		if (self || self.actind)
+		try {
 			self.actind.setMessage('Bilder-Datenbank: ' + rest + ' / ' + _e.imagecounter.images);
+		} catch(E) {
+		}
 	}
 	Ti.App.addEventListener('imagescanprogress', onScann);
+	self.addEventListener('close',function(){Ti.App.removeEventListener('imagescanprogress', onScann);})
 	return self;
 }
