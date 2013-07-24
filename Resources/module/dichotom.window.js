@@ -12,23 +12,23 @@ exports.create = function(_args) {
 		fontsize_label : Ti.Platform.displayCaps.platformWidth * 0.04,
 		padding : Ti.Platform.displayCaps.platformWidth * 0.04,
 	};
+	self.actind.message = 'Suche Bilder.';
+	self.actind.show();
 
 	self.setTitle(_args.dichotom_title);
 	var leftButton = Ti.UI.createButton({
 		title : 'Zurück'
 	});
-	setTimeout(function() {
-		if (Ti.Platform.name !== 'android') {
-			self.setLeftNavButton(leftButton);
-			leftButton.addEventListener('click', function() {
-				self.close({
-					animated : true
-				})
-			});
-		}
-		self.actind.message = 'Suche Bilder.';
-		self.actind.show();
-		var decision = Ti.App.Dichotom.getDecisionById(_args);
+	if (Ti.Platform.name !== 'android') {
+		self.setLeftNavButton(leftButton);
+		leftButton.addEventListener('click', function() {
+			self.close({
+				animated : true
+			})
+		});
+	}
+
+	Ti.App.Dichotom.getDecisionById(_args, function(decision) {
 		self.actind.hide();
 		if (!decision)
 			return self;
@@ -75,61 +75,15 @@ exports.create = function(_args) {
 		self.add(tv)
 		var rows = [];
 		for (var i = 0; i < decision.alternatives.length; i++) {
-			var alt = decision.alternatives[i];
-			rows[i] = Ti.UI.createTableViewRow({
-				hasChild : true,
-				layout : 'vertical',
-				backgroundColor : 'white',
-				next_id : alt.result.next_id,
-				item : alt,
-				height : Ti.UI.SIZE,
-				borderWidth : 1,
-				borderColor : 'gray'
-			});
-			if (alt.media[0] && alt.media[0].url_420px) {
-				var img = Ti.UI.createImageView({
-					image : alt.media[0].url_420px,
-					top : 10,
-					left : 10,
-					width : Ti.UI.FILL,
-					height : 'auto',
-					bubbleParent : true
-				});
-				var withimage = true;
-			} else {
-				var img = Ti.UI.createImageView({
-					image : 'assets/naturlogo.png',
-					top : 10,
-					left : 0,
-					width : 80,
-					height : 80,
-					opacity : 0.5,
-					bubbleParent : true
-				});
-			}
-			rows[i].add(img);
-			rows[i].add(Ti.UI.createLabel({
-				width : Ti.UI.FILL,
-				left : 10,
-				top : 10,
-				right : 10,
-				height : Ti.UI.SIZE,
-				bottom : 10,
-				color : '#444',
-				text : alt.statement.striptags().entities2utf8(),
-				font : {
-					fontSize : Ti.UI.CONF.fontsize_title,
-					fontWeight : 'bold',
-					fontFamily : 'TheSans-B7Bold'
-				},
-			}));
+			rows[i] = require('module/decisionrow').create(decision.alternatives[i]) ;
 		}
 		tv.setData(rows);
 		tv.addEventListener('click', function(_e) {
 			self.actind.show();
 			self.actind.message = 'Hole nächste Entscheidung';
 			var next_id = _e.rowData.next_id;
-			if (!next_id || next_id.match(/_wikipage/i)) {self.actind.message = 'Hole Detailinfos …';
+			if (!next_id || next_id.match(/_wikipage/i)) {
+				self.actind.message = 'Hole Detailinfos …';
 				var win = require('module/dichotom.detail').create(_e.rowData.item);
 				win.open();
 				return;
@@ -148,9 +102,10 @@ exports.create = function(_args) {
 				}).open();
 			}
 		});
-		self.addEventListener('close', function() {
-			//	self = null;
-		})
-	}, 100);
+	});
+	self.addEventListener('close', function() {
+		//	self = null;
+	})
+
 	return self;
 }

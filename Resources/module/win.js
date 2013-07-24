@@ -17,8 +17,7 @@ exports.create = function(_title) {
 		},
 		borderRadius : '8dp',
 		borderColor : 'black',
-		borderWidth : 1,
-		borderColor : 'orange'
+		borderWidth : 0
 	});
 	self.add(self.actind);
 	self.addEventListener('close', function() {
@@ -37,6 +36,11 @@ exports.create = function(_title) {
 		self.actind.hide();
 		console.log('!!!!!!!!!! blur  ' + self.title);
 	});
-
+	function onScann(_e) {
+		var rest = parseInt(_e.imagecounter.images) - parseInt(_e.imagecounter.found);
+		if (self || self.actind)
+			self.actind.setMessage('Bilder-Datenbank: ' + rest + ' / ' + _e.imagecounter.images);
+	}
+	Ti.App.addEventListener('imagescanprogress', onScann);
 	return self;
 }

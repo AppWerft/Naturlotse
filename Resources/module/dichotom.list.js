@@ -1,4 +1,5 @@
 exports.create = function() {
+	// /Applications/android-sdk-mac_x86/platform-tools/adb -d logcat | grep TiAPI
 	var self = require('module/win').create('Offener Naturführer');
 	self.exitOnClose = true;
 	Ti.UI.CONF = {
@@ -8,7 +9,7 @@ exports.create = function() {
 		padding : Ti.Platform.displayCaps.platformWidth * 0.04,
 	};
 	var tv = Ti.UI.createScrollView({
-		backgroundColor : 'transparent',
+		backgroundColor : 'white',
 		height : Ti.UI.FILL,
 		contentHeight : Ti.UI.SIZE,
 		width : Ti.UI.FILL,
@@ -18,6 +19,9 @@ exports.create = function() {
 	self.add(tv);
 	var list = Ti.App.Dichotom.getAll({
 		onload : function(_list) {
+			if (!_list) {
+				self.close();
+			}
 			tv.removeAllChildren();
 			var rows = [];
 			for (var i = 0; i < _list.length; i++) {
@@ -37,7 +41,9 @@ exports.create = function() {
 					image : item.IconURL,
 					width : 70,
 					height : 'auto',
+					parent : rows[i],
 					top : 10,
+					bottom : 10,
 					left : 10
 				}));
 				var container = Ti.UI.createView({
@@ -46,6 +52,7 @@ exports.create = function() {
 					left : 90,
 					top : 10,
 					dichotom : item,
+					parent : rows[i],
 					right : 10,
 					bottom : 10,
 					bubbleParent : true,
@@ -59,7 +66,9 @@ exports.create = function() {
 					color : '#444',
 					dichotom : item,
 					bubbleParent : true,
+					touchEnabled : false,
 					text : item.Title,
+					parent : rows[i],
 					font : {
 						fontSize : Ti.UI.CONF.fontsize_title * 0.9,
 						fontWeight : 'bold',
@@ -81,16 +90,35 @@ exports.create = function() {
 				container.add(progress);
 				tv.add(rows[i]);
 				rows[i].addEventListener('click', function(_e) {
+					var source = (_e.source.parent) ? _e.source.parent : _e.source;
+					source.setBackgroundColor('#9f9');
+					setTimeout(function() {
+						source.setBackgroundColor('white');
+					}, 300);
+					if (!source.dichotom || !source.dichotom.id)
+						return;
 					self.actind.show();
-					var options = {
-						dichotom_id : _e.source.dichotom.id,
-						dichotom_title : _e.source.dichotom.Title
-					};
-					if (self.tab) {
-						self.tab.open(require('module/dichotom.window').create(options));
-					} else {
-						require('module/dichotom.window').create(options).open();
-					}
+					self.actind.message = 'Überprüfung, ob Bilder zwischengespeichert werden können.';
+
+					Ti.App.Dichotom.trytocacheAllByDichotomId({
+						dichotom_id : source.dichotom.id,
+						onload : function(_e) {
+							self.actind.hide();
+							if (_e == true) {
+								self.actind.hide();
+								var options = {
+									dichotom_id : source.dichotom.id,
+									dichotom_title : source.dichotom.Title
+								};
+								if (self.tab) {
+									self.tab.open(require('module/dichotom.window').create(options));
+								} else {
+									require('module/dichotom.window').create(options).open();
+								}
+							}
+						}
+					});
+
 				});
 			}
 		}
@@ -99,7 +127,9 @@ exports.create = function() {
 		text : 'Demo',
 		opacity : 0.25,
 		color : 'red',
+		borderWidth : 0,
 		bubbleParent : true,
+		touchEnabled : false,
 		transform : Ti.UI.create2DMatrix({
 			rotate : -8
 		}),
@@ -108,14 +138,15 @@ exports.create = function() {
 			fontWeight : 'bold'
 		}
 	});
-	/*	demo.animate({
-	 transform : Ti.UI.create2DMatrix({
-	 scale : 1,
-	 duration : 2000
-	 })
-	 })*/
-	
-
+	demo.animate({
+		transform : Ti.UI.create2DMatrix({
+			scale : 0.01,
+			rotate : 180
+		}),
+		duration : 7000
+	}, function() {
+		self.remove(demo)
+	});
 	self.add(demo);
 	return self;
 }
