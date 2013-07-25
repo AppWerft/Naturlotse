@@ -1,6 +1,6 @@
 var IMAGECACHE = 'ImageCache';
 var MAXCLIENTS = 5;
-var CACHEDEBUG = true;
+var CACHEDEBUG = false;
 var Dichotom = function() {
 	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms');
 	this.dichotom_id = null;
@@ -17,7 +17,6 @@ var Dichotom = function() {
 Dichotom.prototype.getImage = function(_args) {
 	var self = this;
 	var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(_args.url) + '@2x.png');
-	console.log(_args.url);
 	if (!CACHEDEBUG && file.exists()) {
 		console.log('IMAGE is always here ...');
 		self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
@@ -29,6 +28,13 @@ Dichotom.prototype.getImage = function(_args) {
 	} else {
 		var xhr = Ti.Network.createHTTPClient({
 			timeout : 20000,
+			ondatastream : function(_e) {
+				console.log(_e);
+				if (_args.onprogress && typeof _args.onprogress == 'function') {
+					console.log(_e.progress);
+					_args.onprogress(_e.progress)
+				}
+			},
 			onload : function(_e) {
 				if (this.status == 200) {
 					file.write(xhr.responseData);
@@ -37,13 +43,17 @@ Dichotom.prototype.getImage = function(_args) {
 						path : file.nativePath,
 						ok : true
 					});
-				} else
+				} else {
+					console.log(this.status);
 					_args.onload({
 						ok : false,
 						status : this.status
 					});
+				}
 			},
 			onerror : function(_e) {
+				console.log('S=' + this.status);
+				console.log('E=' + this.error);
 				_args.onload({
 					ok : false
 				});
@@ -89,17 +99,26 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 		_args.onload();
 		// switch to next page
 		if (e.index === 0) {// no cancel, the user  want to cache
+			var counter = 0;
+			var progresswindow = require('module/progress.window').create();
+			progresswindow.open();
 			function cacheAllByDichotom(_dichotom_id) {
 				var q = 'SELECT url FROM images WHERE cached=0  AND dichotomid = "' + _dichotom_id + '" LIMIT 0,1';
-				resultset = this.dblink.execute(q);
+				resultset = self.dblink.execute(q);
 				if (resultset.isValidRow()) {
 					var url = resultset.fieldByName('url');
 					self.getImage({
 						url : url,
+						onprogress : function(_progress) {
+							progresswindow.progress.detail.value = _progress;
+						},
 						onload : function(_res) {
+							counter++;
+							progresswindow.preview.image = _res.path;
+							progresswindow.progress.total.value = counter / images.length;
 							/* next row until all ros are cached*/
 							if (_res.ok == true) {
-								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=', url,_dichotom_id);
+								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=?', url, _dichotom_id);
 								cacheAllByDichotom(_dichotom_id);
 							} else {
 								console.log('Error by mirroring');
@@ -108,9 +127,11 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 					});
 					resultset.next();
 				} else {
+					progresswindow.close();
 					_args.onload(true);
 				}
 			}
+
 			cacheAllByDichotom(_args.dichotom_id);
 		}
 	});
