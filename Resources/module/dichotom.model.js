@@ -99,7 +99,7 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 		_args.onload();
 		// switch to next page
 		if (e.index === 0) {// no cancel, the user  want to cache
-			var counter = 0;
+			var counter = 1;
 			var progresswindow = require('module/progress.window').create();
 			progresswindow.open();
 			function cacheAllByDichotom(_dichotom_id) {
@@ -111,11 +111,12 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 						url : url,
 						onprogress : function(_progress) {
 							progresswindow.progress.detail.value = _progress;
+							progresswindow.progress.total.message = counter + ' / ' + images.length;
 						},
 						onload : function(_res) {
 							counter++;
 							progresswindow.preview.image = _res.path;
-							progresswindow.progress.total.value = counter / images.length;
+							progresswindow.progress.total.value = (counter-2) / images.length;
 							/* next row until all ros are cached*/
 							if (_res.ok == true) {
 								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=?', url, _dichotom_id);

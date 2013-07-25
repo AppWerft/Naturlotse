@@ -8,6 +8,7 @@ exports.create = function() {
 	self.preview = Ti.UI.createImageView({
 		width : 280,
 		height : 'auto',
+		defaultImage : '/assets/naturlogo.png',
 		borderRadius : 10
 	});
 	self.add(self.preview);
@@ -15,32 +16,36 @@ exports.create = function() {
 		bottom : 0,
 		height : 100,
 		layout : 'vertical',
-		backgroundColor : 'white',
+		backgroundImage : '/assets/way.png',
 		height : Ti.UI.SIZE
 	});
 	self.add(container);
 	self.progress = {
 		detail : Ti.UI.createProgressBar({
-			height : 20,
+			height : 'auto',
 			width : '90%',
 			top : 10,
 			min : 0,
+			opacity : 0.7,
 			value : 0,
 			max : 1
 		}),
 		total : Ti.UI.createProgressBar({
-			height : 20,
-			top : 10,
+			height : 'auto',
+			message : 'Total',
+			top : 5,
+			opacity : 0.7,
+			bottom : 10,
 			min : 0,
 			width : '90%',
 			max : 1,
 			value : 0
 		}),
 	}
-	self.progress.detail.show();
-	self.progress.total.show();
 	container.add(self.progress.detail);
 	container.add(self.progress.total);
+	self.progress.detail.show();
+	self.progress.total.show();
 	return self;
 }
 
