@@ -1,7 +1,8 @@
 exports.create = function(_title) {
 	var self = Ti.UI.createWindow({
 		title : _title,
-		barColor : 'black'
+		barColor : 'black',
+		orientationModes : [Titanium.UI.PORTRAIT]
 	});
 	self.actind = Ti.UI.createActivityIndicator({
 		color : 'white',
@@ -43,7 +44,11 @@ exports.create = function(_title) {
 		} catch(E) {
 		}
 	}
+
+
 	Ti.App.addEventListener('imagescanprogress', onScann);
-	self.addEventListener('close',function(){Ti.App.removeEventListener('imagescanprogress', onScann);})
+	self.addEventListener('close', function() {
+		Ti.App.removeEventListener('imagescanprogress', onScann);
+	})
 	return self;
 }

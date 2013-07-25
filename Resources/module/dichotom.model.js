@@ -1,9 +1,12 @@
 var IMAGECACHE = 'ImageCache';
+var MAXCLIENTS = 5;
+var CACHEDEBUG = true;
 var Dichotom = function() {
 	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms');
 	this.dichotom_id = null;
 	this.tree_id = null;
 	this.tree_metadata = null;
+	this.httpclients = 0;
 	var g = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE);
 	if (!g.exists()) {
 		g.createDirectory();
@@ -12,73 +15,61 @@ var Dichotom = function() {
 }
 
 Dichotom.prototype.getImage = function(_args) {
+	var self = this;
 	var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(_args.url) + '@2x.png');
 	console.log(_args.url);
-	if (file.exists()) {
+	if (!CACHEDEBUG && file.exists()) {
 		console.log('IMAGE is always here ...');
-		_args.onload(file.nativePath)
+		self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
+		_args.onload({
+			path : file.nativePath,
+			ok : true
+		});
+		return;
 	} else {
 		var xhr = Ti.Network.createHTTPClient({
 			timeout : 20000,
 			onload : function(_e) {
-				console.log(this.status);
-				file.write(xhr.responseData);
-				_args.onload(file.nativePath);
+				if (this.status == 200) {
+					file.write(xhr.responseData);
+					self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
+					_args.onload({
+						path : file.nativePath,
+						ok : true
+					});
+				} else
+					_args.onload({
+						ok : false,
+						status : this.status
+					});
 			},
 			onerror : function(_e) {
-				console.log(_e.error);
+				_args.onload({
+					ok : false
+				});
 			}
 		});
 		xhr.open('GET', _args.url);
+		self.httpclients += 1;
 		xhr.send(null);
-
 	}
 
 };
+
 Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 	console.log('START CACHING');
-	if (Ti.Network.getNetworkType() == Ti.Network.NETWORK_MOBILE) {
-		var dialog = Ti.UI.createAlertDialog({
-			cancel : 1,
-			buttonNames : ['Ja, weiter', 'Nein, Abbruch'],
-			message : 'ZUr Zeit steht nur eine mobile Verbindung zu Verfügung.\n\nDennoch Naturpilozten nutzen?',
-			title : 'Kein WLAN …'
-		});
-		dialog.show();
-		dialog.addEventListener('click', function(_e) {
-			if (_e.index == 0) {
-				_args.onload(true);
-			} else
-				_args.onload(false);
-		})
-		return;
-	}
-	var q = 'SELECT decision FROM decisions WHERE dichotomid = "' + _args.dichotom_id + '"';
+	var total = 0;
+	var q = 'SELECT COUNT(*) AS total FROM images WHERE dichotomid = "' + _args.dichotom_id + '"';
 	var resultset = this.dblink.execute(q);
+	if (resultset.isValidRow()) {
+		total = resultset.fieldByName('total')
+	}
+	var cache = (CACHEDEBUG) ? 1 : 0;
+	var q = 'SELECT * FROM images WHERE cached=' + cache + ' AND dichotomid = "' + _args.dichotom_id + '"';
+	resultset = this.dblink.execute(q);
 	var images = [];
-	var imagecounter = {
-		images : 0,
-		found : 0
-	};
 	while (resultset.isValidRow()) {
-		var decision = JSON.parse(resultset.fieldByName('decision'));
-		if (decision) {
-			for (var a = 0; a < decision.length; a++) {
-				if (decision[a].media && decision[a].media[0] && decision[a].media[0]['url_420px']) {
-					var url = decision[a].media && decision[a].media[0]['url_420px'];
-					var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(url) + '@2x.png');
-					if (file.exists()) {
-						imagecounter.found += 1;
-					} else {
-						images.push(url);
-					}
-					imagecounter.images += 1;
-					Ti.App.fireEvent('imagescanprogress', {
-						imagecounter : imagecounter
-					});
-				}
-			}
-		}
+		images.push(resultset.fieldByName('url'));
 		resultset.next();
 	}
 	resultset.close();
@@ -89,7 +80,7 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 	var dialog = Ti.UI.createAlertDialog({
 		cancel : 1,
 		buttonNames : ['Ja, runterladen', 'Nein, Abbruch'],
-		message : 'Insgesamt besteht die Bestimmung aus ' + parseInt(imagecounter.images) + ' Bildern. \nMöchten Sie die fehlenden ' + images.length + ' Bilder für den Freiimfelde-Gebrauch herunterladen?',
+		message : 'Insgesamt besteht die Bestimmung aus ' + total + ' Bildern. \nMöchten Sie die ' + images.length + ' Bilder für den Freiimfelde-Gebrauch herunterladen?',
 		title : 'Für netzlosen Gebrauch vorbereiten …'
 	});
 	dialog.show();
@@ -98,30 +89,46 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 		_args.onload();
 		// switch to next page
 		if (e.index === 0) {// no cancel, the user  want to cache
-			setTimeout(function() {
-				for (var i = 0; i < images.length; i++) {
+			function cacheAllByDichotom(_dichotom_id) {
+				var q = 'SELECT url FROM images WHERE cached=0  AND dichotomid = "' + _dichotom_id + '" LIMIT 0,1';
+				resultset = this.dblink.execute(q);
+				if (resultset.isValidRow()) {
 					self.getImage({
-						url : images[i],
-						onload : function(_path) {
+						url : resultset.fieldByName('url'),
+						onload : function(_res) {
+							/* next row until all ros are cached*/
+							if (_res.ok == true) {
+								cacheAllByDichotom(_dichotom_id);
+							} else {
+								console.log('Error by mirroring');
+							}
 						}
 					});
+					resultset.next();
+				} else {
+					_args.onload(true);
 				}
-			}, 100);
+			}
+
+			var result = cacheAllByDichotom(_args.dichotom_id);
 		}
 	});
 }
 
 Dichotom.prototype.getAllDichotoms = function(_args) {
 	if (Ti.App.Properties.hasProperty('dichotoms')) {
+
 		console.log('DICHOTOMs exists');
 		var dichotomsstring = Ti.App.Properties.getString('dichotoms');
+		var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, 'dichotoms.json');
+		file.write(dichotomsstring);
 		var md5 = Ti.Utils.md5HexDigest(dichotomsstring);
 		try {
 			_args.onload(JSON.parse(dichotomsstring));
 			return;
 		} catch(E) {
 			console.log('remove DICHOTOMLIST');
-			Ti.App.Properties.removeProperty('dichotom');
+			Ti.App.Properties.removeProperty('dichotoms');
 		}
 	}
 	var dialog = Ti.UI.createAlertDialog({
@@ -146,8 +153,7 @@ Dichotom.prototype.getAllDichotoms = function(_args) {
 				dialog.show();
 			}
 			var dichotoms = xml.toObject(xml).Wiki.Page;
-
-			if (!md5 || md5 !== Ti.Utils.md5HexDigest(dichotoms)) {
+			if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(dichotoms))) {
 				console.log('refresh DICHOTOMs');
 				Ti.App.Properties.setString('dichotoms', JSON.stringify(dichotoms));
 			}
@@ -156,7 +162,7 @@ Dichotom.prototype.getAllDichotoms = function(_args) {
 		onerror : function() {
 			console.log(this.error);
 		},
-		timeout : 20000
+		timeout : 60000
 	});
 	xhr.open('GET', 'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey');
 	xhr.send(null);
@@ -164,7 +170,7 @@ Dichotom.prototype.getAllDichotoms = function(_args) {
 
 Dichotom.prototype.importDichotom = function(_args) {
 	var self = this;
-	var url = _args.dichotom['Exchange_4_URI'].text;
+	var url = _args.dichotom['Exchange_4_URI'];
 	try {
 		var mtime = _args.dichotom['Creation_Time'];
 	} catch(E) {
@@ -174,23 +180,47 @@ Dichotom.prototype.importDichotom = function(_args) {
 	var dichotomid = Ti.Utils.md5HexDigest(_args.dichotom.Title);
 	_args.row.dichotom_id = dichotomid;
 	var dichotom_is_actual = false;
-	var resultset = this.dblink.execute('SELECT mtime FROM dichotoms WHERE dichotomid=?', dichotomid);
+
+	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', dichotomid);
+	if (resultset.isValidRow())
+		var imagestotal = resultset.fieldByName('total');
+
+	console.log(imagestotal);
+	resultset.close();
+
+	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', dichotomid);
+	if (resultset.isValidRow())
+		decisionstotal = resultset.fieldByName('total');
+	resultset.close();
+
+	var metatext = decisionstotal + ' Fragen   ';
+	if (imagestotal > 0)
+		metatext += imagestotal + ' Bilder';
+	console.log(metatext);
+	_args.row.meta.setText(metatext);
+
+	resultset = this.dblink.execute('SELECT mtime FROM dichotoms WHERE dichotomid=?', dichotomid);
 	if (resultset.isValidRow())
 		if (mtime == resultset.fieldByName('mtime'))
 			dichotom_is_actual = true;
 	resultset.close();
 	if (dichotom_is_actual) {
-		_args.progress.hide();
-		_args.row.hasChild = true;
+		_args.row.progress.hide();
 		return;
 	}
 	_args.progress.show();
 	var xhr = Ti.Network.createHTTPClient({
+		timeout : 25000,
+		onerror : function() {
+			console.log(url);
+			console.log(this.error);
+		},
 		ondatastream : function(_e) {
 			_args.progress.value = _e.progress;
 		},
 		onload : function() {
 			var data = JSON.parse(xhr.responseText.striptags());
+			self.dblink.execute('DELETE  FROM  images WHERE dichotomid="' + dichotomid + '"');
 			self.dblink.execute('DELETE  FROM  dichotoms WHERE dichotomid="' + dichotomid + '"');
 			self.dblink.execute('DELETE  FROM  decisiontrees WHERE dichotomid="' + dichotomid + '"');
 			self.dblink.execute('DELETE  FROM  decisions WHERE dichotomid="' + dichotomid + '"');
@@ -205,6 +235,13 @@ Dichotom.prototype.importDichotom = function(_args) {
 							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', dichotomid, treeid, decision.id, JSON.stringify(decision.alternative));
 						else
 							console.log(decision);
+
+						for (var a = 0; a < decision.alternative.length; a++) {
+							if (decision.alternative[a].media && decision.alternative[a].media[0] && decision.alternative[a].media[0]['url_420px']) {
+								var imageurl = decision.alternative[a].media && decision.alternative[a].media[0]['url_420px'];
+								self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', dichotomid, imageurl);
+							}
+						}
 					}
 				}
 			}
@@ -215,21 +252,7 @@ Dichotom.prototype.importDichotom = function(_args) {
 	xhr.open('GET', url);
 	xhr.send(null);
 	data = null;
-}
 
-Dichotom.prototype._getAll = function() {
-	var resultset = this.dblink.execute('SELECT * FROM dichotoms');
-	var list = [];
-	while (resultset.isValidRow()) {
-
-		list.push({
-			id : resultset.fieldByName('dichotomid'),
-			meta : JSON.parse(resultset.fieldByName('meta'))
-		});
-		resultset.next();
-	}
-	resultset.close();
-	return list;
 }
 
 Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {

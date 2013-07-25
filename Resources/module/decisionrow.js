@@ -27,8 +27,8 @@ exports.create = function(alt) {
 		self.add(imageview);
 		Ti.App.Dichotom.getImage({
 			url : self.image,
-			onload : function(_path) {
-				imageview.setImage(_path)
+			onload : function(_res) {
+				imageview.setImage(_res.path)
 			}
 		});
 	} else {
