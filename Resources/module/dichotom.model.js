@@ -93,11 +93,13 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 				var q = 'SELECT url FROM images WHERE cached=0  AND dichotomid = "' + _dichotom_id + '" LIMIT 0,1';
 				resultset = this.dblink.execute(q);
 				if (resultset.isValidRow()) {
+					var url = resultset.fieldByName('url');
 					self.getImage({
-						url : resultset.fieldByName('url'),
+						url : url,
 						onload : function(_res) {
 							/* next row until all ros are cached*/
 							if (_res.ok == true) {
+								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=', url,_dichotom_id);
 								cacheAllByDichotom(_dichotom_id);
 							} else {
 								console.log('Error by mirroring');
@@ -109,8 +111,7 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 					_args.onload(true);
 				}
 			}
-
-			var result = cacheAllByDichotom(_args.dichotom_id);
+			cacheAllByDichotom(_args.dichotom_id);
 		}
 	});
 }
