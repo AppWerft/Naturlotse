@@ -1,33 +1,15 @@
 exports.create = function(_args) {
 	var self = require('module/win').create('Dichotom window');
-	self.setModal(true);
-	self.backgroundColor = 'white';
-	console.log(Ti.Platform.availableMemory);
-	self.addEventListener('android:back', function(_e) {
-		console.log('CLOSE ======');
-		_e.source.close()
-	});
 	self.actind.message = 'Suche Bilder.';
 	self.actind.show();
-
 	self.setTitle(_args.dichotom_title);
-
-	if (Ti.Platform.name !== 'android') {
-		var leftButton = Ti.UI.createButton({
-			title : 'Zurück'
-		});
-		self.setLeftNavButton(leftButton);
-		leftButton.addEventListener('click', function() {
-			self.close({
-				animated : true
-			})
-		});
-	}
 
 	Ti.App.Dichotom.getDecisionById(_args, function(decision) {
 		self.actind.hide();
 		if (!decision)
 			return self;
+		if (decision.name)
+			self.title = 'Entscheidung № ' + decision.name;
 		if (decision.meta) {
 			if (!decision.meta.creator)
 				decision.meta.creator = decision.meta.creators;
@@ -69,24 +51,28 @@ exports.create = function(_args) {
 		});
 		self.add(tv)
 		var rows = [];
-		for (var i = 0; i < decision.alternatives.length; i++) {
-			rows[i] = require('module/decisionrow').create(decision.alternatives[i]);
-		}
+		if (decision.alternatives)
+			for (var i = 0; i < decision.alternatives.length; i++) {
+				rows[i] = require('module/decisionrow').create(decision.alternatives[i]);
+			}
 		tv.setData(rows);
 		tv.addEventListener('click', function(_e) {
 			self.actind.show();
 			self.actind.message = 'Hole nächste Entscheidung';
 			var next_id = _e.rowData.next_id;
 			if (!next_id || next_id.match(/_wikipage/i)) {
-				self.actind.message = 'Hole Detailinfos …';
-				var win = require('module/dichotom.detail').create(_e.rowData.item);
-				win.open();
+				var win = self.actind.message = 'Hole Detailinfos …';
+				if (self.tab) {
+					self.tab.open(require('module/dichotom.detail').create(_e.rowData.item));
+				} else {
+					require('module/dichotom.detail').create(_e.rowData.item).open();
+				}
 				return;
 			}
 			var options = {
 				next_id : _e.rowData.next_id,
 				dichotom_id : _args.dichotom_id,
-				tree_id : decision.tree_id
+				currenttree_id : decision.currenttree_id
 			};
 			if (self.tab) {
 				self.tab.open(require('module/dichotom.window').create(options));
@@ -106,8 +92,5 @@ exports.create = function(_args) {
 				}
 			})
 	});
-	self.addEventListener('close', function() {
-		//	self = null;
-	})
 	return self;
 }

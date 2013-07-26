@@ -49,7 +49,7 @@ Dichotom.prototype.getImage = function(_args) {
 						ok : false,
 						status : this.status
 					});
-		}
+				}
 			},
 			onerror : function(_e) {
 				console.log('S=' + this.status);
@@ -276,70 +276,80 @@ Dichotom.prototype.importDichotom = function(_args) {
 	data = null;
 
 }
-/*  get all for a decision (including infos about decsion tree */
+/*  get all for a decision (including infos about decsion tree
+ *
+ *  args are:
+ *  dichotom_id
+ *  next_id  (null if start)
+ *  currenttree_id
+ *  onsuccess  (callback)
+ */
 Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
-	if (_args.dichotom_id) {
-		this.dichotom_id = _args.dichotom_id;
-	}
-	console.log('START getDecisionById');
-
-	if (!_args.next_id) {
-		var q = 'SELECT treeid, meta FROM decisiontrees WHERE dichotomid = "' + this.dichotom_id + '" LIMIT 0,1';
+	var options = {
+		decision_id : _args.next_id,
+		dichotom_id : _args.dichotom_id,
+		currenttree_id : _args.currenttree_id,
+		name : ''
+	};
+	console.log('........START getDecisionById');
+	console.log(options)
+	if (!options.decision_id) {
+		var q = 'SELECT treeid, meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" LIMIT 0,1';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
-			this.tree_id = resultset.fieldByName('treeid');
-			console.log('no nex_id ===> id initial setting to start-treeId "' + this.tree_id + '"')
+			options.currenttree_id = resultset.fieldByName('treeid');
+			console.log('no nex_id ===> id initial setting to start-treeId "' + options.currenttree_id + '"')
 		} else
-			console.log('no result by this dichotomid ' + this.dichotom_id)
+			console.log('no result by this dichotomid ' + options.dichotom_id)
 		resultset.close();
 	} else {
-		var regex = /_decisiontree/i;
-		if (_args.next_id.match(regex)) {// new tre
-			this.tree_id = _args.next_id + '_';
-			console.log('next_id was  new treeId ' + this.tree_id)
-			_args.next_id = undefined;
-		} else {
-			this.tree_id = _args.tree_id;
+		if (options.decision_id.match(/_decisiontree/i)) {// new tree
+			options.currenttree_id = options.decision_id + '_';
+			console.log('next_id was  new treeId ' + options.currenttree_id)
+			options.decision_id = undefined;
 		}
 	}
-	var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + this.dichotom_id + '" AND treeid="' + this.tree_id + '"';
-	var resultset = this.dblink.execute(q);
-	if (resultset.isValidRow()) {
-		var meta = JSON.parse(resultset.fieldByName('meta'));
-		resultset.close();
-	}
-	var q = 'SELECT decision FROM decisions WHERE dichotomid = "' + this.dichotom_id + '" AND treeid="' + this.tree_id + '"';
-	if (_args.next_id) {
-		q += ' AND decisionid ="' + _args.next_id + '"';
+	console.log('........After testing if we change to other tree');
+	console.log(options)
+	console.log('........Determining next decisionid');
+
+	var q = 'SELECT decision, decisionid FROM decisions WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
+	if (options.decision_id) {
+		q += ' AND decisionid ="' + options.decision_id + '"';
 	}
 	q += ' LIMIT 0,1';
+	console.log(q)
 	var resultset = this.dblink.execute(q);
 	if (resultset.isValidRow()) {
-		var alternatives = JSON.parse(resultset.fieldByName('decision'));
+		options.alternatives = JSON.parse(resultset.fieldByName('decision'));
+		var decisionid = resultset.fieldByName('decisionid');
+		options.name = decisionid.split('_decision_')[1];
 		resultset.close();
-		_onsuccess({
-			meta : meta,
-			alternatives : alternatives,
-			tree_id : this.tree_id
-		});
-	} else {
-		this.tree_id = _args.tree_id;
-		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + this.dichotom_id + '" AND treeid="' + this.tree_id + '"';
+		// getting meta from currenttree
+		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
-			var meta = JSON.parse(resultset.fieldByName('meta'));
+			options.meta = JSON.parse(resultset.fieldByName('meta'));
 			resultset.close();
 		}
-		var q = 'SELECT decision FROM decisions WHERE dichotomid = "' + this.dichotom_id + '" AND treeid="' + this.tree_id + '" LIMIT 0,1';
+		_onsuccess(options);
+	} else {
+		options.currenttree_id = _args.currenttree_id;
+		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
-			var alternatives = JSON.parse(resultset.fieldByName('decision'));
+			options.meta = JSON.parse(resultset.fieldByName('meta'));
 			resultset.close();
-			_onsuccess({
-				meta : meta,
-				alternatives : alternatives,
-				tree_id : this.tree_id
-			})
+		}
+		var q = 'SELECT decision,decisionid FROM decisions WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '" LIMIT 0,1';
+		var resultset = this.dblink.execute(q);
+		if (resultset.isValidRow()) {
+			optionsalternatives = JSON.parse(resultset.fieldByName('decision'));
+			var decisionid = resultset.fieldByName('decisionid');
+			console.log(decisionid);
+			options.name = decisionid.split('_decision_')[1];
+			resultset.close();
+			_onsuccess(options)
 		}
 	}
 

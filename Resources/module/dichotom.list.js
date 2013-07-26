@@ -1,8 +1,25 @@
 exports.create = function() {
 	// /Applications/android-sdk-mac_x86/platform-tools/adb -d logcat | grep TiAPI
-	var self = require('module/win').create('Offener Naturführer');
-	self.exitOnClose = true;
-
+	var self = Ti.UI.createWindow({
+		title : 'Offener Naturführer',
+		navBarHidden : true,
+		exitOnClose : true
+	});
+	self.actind = Ti.UI.createActivityIndicator({
+		color : 'white',
+		backgroundColor : 'black',
+		width : 300,
+		message : 'Bitte etwas Geduld … ',
+		height : 80,
+		zIndex : 999,
+		opacity : 0.8,
+		font : {
+			fontSize : '12dp'
+		},
+		borderRadius : '8dp',
+		borderWidth : 0
+	});
+	self.add(self.actind);
 	var tv = Ti.UI.createScrollView({
 		backgroundColor : 'white',
 		height : Ti.UI.FILL,
