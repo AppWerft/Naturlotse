@@ -16,9 +16,9 @@ var Dichotom = function() {
 
 Dichotom.prototype.getImage = function(_args) {
 	var self = this;
+
 	var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(_args.url) + '@2x.png');
-	if (!CACHEDEBUG && file.exists()) {
-		console.log('IMAGE is always here ...');
+	if (file.exists()) {
 		self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
 		_args.onload({
 			path : file.nativePath,
@@ -29,9 +29,7 @@ Dichotom.prototype.getImage = function(_args) {
 		var xhr = Ti.Network.createHTTPClient({
 			timeout : 20000,
 			ondatastream : function(_e) {
-				console.log(_e);
 				if (_args.onprogress && typeof _args.onprogress == 'function') {
-					console.log(_e.progress);
 					_args.onprogress(_e.progress)
 				}
 			},
@@ -43,13 +41,15 @@ Dichotom.prototype.getImage = function(_args) {
 						path : file.nativePath,
 						ok : true
 					});
+					file = null;
+					xhr = null;
 				} else {
 					console.log(this.status);
 					_args.onload({
 						ok : false,
 						status : this.status
 					});
-				}
+		}
 			},
 			onerror : function(_e) {
 				console.log('S=' + this.status);
@@ -60,11 +60,9 @@ Dichotom.prototype.getImage = function(_args) {
 			}
 		});
 		xhr.open('GET', _args.url);
-		self.httpclients += 1;
 		xhr.send(null);
 	}
-
-};
+}
 
 Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 	console.log('START CACHING');
@@ -90,7 +88,7 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 	var dialog = Ti.UI.createAlertDialog({
 		cancel : 1,
 		buttonNames : ['Ja, runterladen', 'Nein, Abbruch'],
-		message : 'Insgesamt besteht die Bestimmung aus ' + total + ' Bildern. \nMöchten Sie die ' + images.length + ' Bilder für den Freiimfelde-Gebrauch herunterladen?',
+		message : 'Insgesamt besteht die Bestimmung aus ' + total + ' Bildern. \n\nMöchten Sie die ' + images.length + ' Bilder für den Freiimfelde-Gebrauch herunterladen?',
 		title : 'Für netzlosen Gebrauch vorbereiten …'
 	});
 	dialog.show();
@@ -102,7 +100,8 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 			var counter = 1;
 			var progresswindow = require('module/progress.window').create();
 			progresswindow.open();
-			function cacheAllByDichotom(_dichotom_id) {
+			function cacheAllImagesByDichotom(_dichotom_id) {
+				console.log(Ti.Platform.availableMemory);
 				var q = 'SELECT url FROM images WHERE cached=0  AND dichotomid = "' + _dichotom_id + '" LIMIT 0,1';
 				resultset = self.dblink.execute(q);
 				if (resultset.isValidRow()) {
@@ -116,24 +115,24 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 						onload : function(_res) {
 							counter++;
 							progresswindow.preview.image = _res.path;
-							progresswindow.progress.total.value = (counter-2) / images.length;
+							progresswindow.progress.total.value = (counter - 2) / images.length;
 							/* next row until all ros are cached*/
 							if (_res.ok == true) {
 								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=?', url, _dichotom_id);
-								cacheAllByDichotom(_dichotom_id);
+								cacheAllImagesByDichotom(_dichotom_id);
 							} else {
-								console.log('Error by mirroring');
+								console.log('Error mirroring');
 							}
 						}
 					});
-					resultset.next();
+					resultset.close();
 				} else {
 					progresswindow.close();
 					_args.onload(true);
 				}
 			}
 
-			cacheAllByDichotom(_args.dichotom_id);
+			cacheAllImagesByDichotom(_args.dichotom_id);
 		}
 	});
 }
@@ -277,7 +276,7 @@ Dichotom.prototype.importDichotom = function(_args) {
 	data = null;
 
 }
-
+/*  get all for a decision (including infos about decsion tree */
 Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
 	if (_args.dichotom_id) {
 		this.dichotom_id = _args.dichotom_id;
@@ -332,7 +331,6 @@ Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
 			resultset.close();
 		}
 		var q = 'SELECT decision FROM decisions WHERE dichotomid = "' + this.dichotom_id + '" AND treeid="' + this.tree_id + '" LIMIT 0,1';
-		console.log(q);
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			var alternatives = JSON.parse(resultset.fieldByName('decision'));
