@@ -21,7 +21,7 @@ exports.create = function(_image, _caption) {
 		left : 10,
 		right : 10,
 		height : Ti.UI.SIZE,
-		text : _caption,
+		text : _caption.entities2utf8(),
 		color : '#444',
 		font : {
 			fontSize : Ti.App.CONF.fontsize_subtitle,

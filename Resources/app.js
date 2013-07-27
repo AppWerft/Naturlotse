@@ -7,8 +7,12 @@
 	};
 	Ti.App.XMLTools = require('vendor/XMLTools');
 	Ti.include('vendor/prototypes.js');
-	var dichotom = require('module/dichotom.model');
-	Ti.App.Dichotom = new dichotom();
-	var win = require('module/dichotom.list').create();
-	win.open();
+	var Taxo = require('module/taxonomy.model');
+	Ti.App.Dichotom = new Taxo();
+	require('module/packagelist.window').create();
+	require('module/xenocanto.model').getIDsByLatinname({
+		latin : 'Ciconia nigra',
+		onload : function() {
+		}
+	});
 })();

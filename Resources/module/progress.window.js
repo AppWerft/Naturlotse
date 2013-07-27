@@ -6,7 +6,7 @@ exports.create = function() {
 	});
 	self.add(bg);
 	self.preview = Ti.UI.createImageView({
-		width : 280,
+		width : '90%',
 		height : 'auto',
 		defaultImage : '/assets/naturlogo.png',
 		borderRadius : 10

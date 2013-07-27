@@ -1,10 +1,4 @@
 exports.create = function(alt) {
-	Ti.UI.CONF = {
-		fontsize_title : Ti.Platform.displayCaps.platformWidth * 0.06,
-		fontsize_subtitle : Ti.Platform.displayCaps.platformWidth * 0.04,
-		fontsize_label : Ti.Platform.displayCaps.platformWidth * 0.04,
-		padding : Ti.Platform.displayCaps.platformWidth * 0.04,
-	};
 	var self = Ti.UI.createTableViewRow({
 		hasChild : true,
 		backgroundColor : 'white',
@@ -53,8 +47,7 @@ exports.create = function(alt) {
 		color : '#444',
 		text : alt.statement.striptags().entities2utf8(),
 		font : {
-			fontSize : Ti.UI.CONF.fontsize_title,
-			fontWeight : 'bold',
+			fontSize : Ti.App.CONF.fontsize_title*0.9,
 			fontFamily : 'TheSans-B7Bold'
 		},
 	}));

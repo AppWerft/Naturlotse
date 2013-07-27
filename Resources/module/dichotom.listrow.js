@@ -1,10 +1,4 @@
 exports.create = function(item) {
-	Ti.UI.CONF = {
-		fontsize_title : Ti.Platform.displayCaps.platformWidth * 0.06,
-		fontsize_subtitle : Ti.Platform.displayCaps.platformWidth * 0.04,
-		fontsize_label : Ti.Platform.displayCaps.platformWidth * 0.04,
-		padding : Ti.Platform.displayCaps.platformWidth * 0.04,
-	};
 	var self = Ti.UI.createView({
 		hasChild : false,
 		backgroundColor : 'white',
@@ -46,8 +40,7 @@ exports.create = function(item) {
 		text : item.Title,
 		parent : self,
 		font : {
-			fontSize : Ti.UI.CONF.fontsize_title * 0.8,
-			fontWeight : 'bold',
+			fontSize : Ti.App.CONF.fontsize_title * 0.9,
 			fontFamily : 'TheSans-B7Bold'
 		},
 	}));
@@ -58,14 +51,14 @@ exports.create = function(item) {
 		width : '100%',
 		color : '#070',
 		font : {
-			fontSize : Ti.UI.CONF.fontsize_title * 0.6,
+			fontSize : Ti.App.CONF.fontsize_title * 0.6,
 			fontFamily : 'TheSans-B6SemiBold'
 		},
 	});
 	container.add(self.meta);
 	self.progress = Ti.UI.createProgressBar({
-		height : 2,
-		width : '100%',
+		height : 5,
+		width : '90%',
 		min : 0,
 		max : 1,
 		value : 0

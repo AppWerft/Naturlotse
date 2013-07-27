@@ -1,9 +1,7 @@
 exports.create = function(_args) {
-	var self = require('module/win').create('Dichotom window');
+	var self = require('module/win').create(_args.dichotom_title);
 	self.actind.message = 'Suche Bilder.';
 	self.actind.show();
-	self.setTitle(_args.dichotom_title);
-
 	Ti.App.Dichotom.getDecisionById(_args, function(decision) {
 		self.actind.hide();
 		if (!decision)
@@ -63,21 +61,21 @@ exports.create = function(_args) {
 			if (!next_id || next_id.match(/_wikipage/i)) {
 				var win = self.actind.message = 'Hole Detailinfos …';
 				if (self.tab) {
-					self.tab.open(require('module/dichotom.detail').create(_e.rowData.item));
+					self.tab.open(require('module/taxodetail.window').create(_e.rowData.item));
 				} else {
-					require('module/dichotom.detail').create(_e.rowData.item).open();
+					require('module/taxodetailwindow').create(_e.rowData.item).open();
 				}
 				return;
 			}
 			var options = {
 				next_id : _e.rowData.next_id,
-				dichotom_id : _args.dichotom_id,
+				package_id : _args.package_id,
 				currenttree_id : decision.currenttree_id
 			};
 			if (self.tab) {
-				self.tab.open(require('module/dichotom.window').create(options));
+				self.tab.open(require('module/decision.window').create(options));
 			} else {
-				require('module/dichotom.window').create(options).open();
+				require('module/decision.window').create(options).open();
 			}
 		});
 		if (autors)

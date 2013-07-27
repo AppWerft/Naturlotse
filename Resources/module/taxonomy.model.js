@@ -1,9 +1,8 @@
 var IMAGECACHE = 'ImageCache';
-var MAXCLIENTS = 5;
 var CACHEDEBUG = false;
-var Dichotom = function() {
-	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms');
-	this.dichotom_id = null;
+var Taxonom = function() {
+	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms_v2');
+	this.package_id = null;
 	this.tree_id = null;
 	this.tree_metadata = null;
 	this.httpclients = 0;
@@ -14,9 +13,8 @@ var Dichotom = function() {
 	return this;
 }
 
-Dichotom.prototype.getImage = function(_args) {
+Taxonom.prototype.getImage = function(_args) {
 	var self = this;
-
 	var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(_args.url) + '@2x.png');
 	if (file.exists()) {
 		self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
@@ -64,16 +62,16 @@ Dichotom.prototype.getImage = function(_args) {
 	}
 }
 
-Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
+Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 	console.log('START CACHING');
 	var total = 0;
-	var q = 'SELECT COUNT(*) AS total FROM images WHERE dichotomid = "' + _args.dichotom_id + '"';
+	var q = 'SELECT COUNT(*) AS total FROM images WHERE dichotomid = "' + _args.package_id + '"';
 	var resultset = this.dblink.execute(q);
 	if (resultset.isValidRow()) {
 		total = resultset.fieldByName('total')
 	}
 	var cache = (CACHEDEBUG) ? 1 : 0;
-	var q = 'SELECT * FROM images WHERE cached=' + cache + ' AND dichotomid = "' + _args.dichotom_id + '"';
+	var q = 'SELECT * FROM images WHERE cached=' + cache + ' AND dichotomid = "' + _args.package_id + '"';
 	resultset = this.dblink.execute(q);
 	var images = [];
 	while (resultset.isValidRow()) {
@@ -132,14 +130,13 @@ Dichotom.prototype.trytocacheAllByDichotomId = function(_args) {
 				}
 			}
 
-			cacheAllImagesByDichotom(_args.dichotom_id);
+			cacheAllImagesByDichotom(_args.package_id);
 		}
 	});
 }
 
-Dichotom.prototype.getAllDichotoms = function(_args) {
+Taxonom.prototype.getAllPackages = function(_args) {
 	if (Ti.App.Properties.hasProperty('dichotoms')) {
-
 		console.log('DICHOTOMs exists');
 		var dichotomsstring = Ti.App.Properties.getString('dichotoms');
 		var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, 'dichotoms.json');
@@ -166,7 +163,6 @@ Dichotom.prototype.getAllDichotoms = function(_args) {
 		dialog.show();
 		return;
 	}
-	console.log('Try to get DICHOTOMs');
 	var xhr = Ti.Network.createHTTPClient({
 		onload : function() {
 			var xml = new Ti.App.XMLTools(this.responseText);
@@ -190,7 +186,9 @@ Dichotom.prototype.getAllDichotoms = function(_args) {
 	xhr.send(null);
 }
 
-Dichotom.prototype.importDichotom = function(_args) {
+Taxonom.prototype.importDichotom = function(_args) {
+	
+	console.log(_args);
 	var self = this;
 	var url = _args.dichotom['Exchange_4_URI'];
 	try {
@@ -200,7 +198,7 @@ Dichotom.prototype.importDichotom = function(_args) {
 		console.log(E);
 	}
 	var dichotomid = Ti.Utils.md5HexDigest(_args.dichotom.Title);
-	_args.row.dichotom_id = dichotomid;
+	_args.row.package_id = dichotomid;
 	var dichotom_is_actual = false;
 
 	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', dichotomid);
@@ -230,7 +228,7 @@ Dichotom.prototype.importDichotom = function(_args) {
 		_args.row.progress.hide();
 		return;
 	}
-	_args.progress.show();
+	_args.row.progress.show();
 	var xhr = Ti.Network.createHTTPClient({
 		timeout : 25000,
 		onerror : function() {
@@ -238,7 +236,7 @@ Dichotom.prototype.importDichotom = function(_args) {
 			console.log(this.error);
 		},
 		ondatastream : function(_e) {
-			_args.progress.value = _e.progress;
+			_args.row.progress.value = _e.progress;
 		},
 		onload : function() {
 			var data = JSON.parse(xhr.responseText.striptags());
@@ -257,17 +255,17 @@ Dichotom.prototype.importDichotom = function(_args) {
 							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', dichotomid, treeid, decision.id, JSON.stringify(decision.alternative));
 						else
 							console.log(decision);
-
 						for (var a = 0; a < decision.alternative.length; a++) {
-							if (decision.alternative[a].media && decision.alternative[a].media[0] && decision.alternative[a].media[0]['url_420px']) {
-								var imageurl = decision.alternative[a].media && decision.alternative[a].media[0]['url_420px'];
-								self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', dichotomid, imageurl);
+							var media = decision.alternative[a].media && decision.alternative[a].media;
+							for (var m = 0; m < media.length; m++) {
+								if (media[m]['url_420px'])
+									self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', dichotomid, media[m]['url_420px']);
 							}
 						}
 					}
 				}
 			}
-			_args.progress.hide();
+			_args.row.progress.hide();
 			_args.row.hasChild = true;
 		}
 	});
@@ -279,28 +277,28 @@ Dichotom.prototype.importDichotom = function(_args) {
 /*  get all for a decision (including infos about decsion tree
  *
  *  args are:
- *  dichotom_id
+ *  package_id
  *  next_id  (null if start)
  *  currenttree_id
  *  onsuccess  (callback)
  */
-Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
+Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 	var options = {
 		decision_id : _args.next_id,
-		dichotom_id : _args.dichotom_id,
+		package_id : _args.package_id,
 		currenttree_id : _args.currenttree_id,
 		name : ''
 	};
 	console.log('........START getDecisionById');
 	console.log(options)
 	if (!options.decision_id) {
-		var q = 'SELECT treeid, meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" LIMIT 0,1';
+		var q = 'SELECT treeid, meta FROM decisiontrees WHERE dichotomid = "' + options.package_id + '" LIMIT 0,1';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			options.currenttree_id = resultset.fieldByName('treeid');
 			console.log('no nex_id ===> id initial setting to start-treeId "' + options.currenttree_id + '"')
 		} else
-			console.log('no result by this dichotomid ' + options.dichotom_id)
+			console.log('no result by this dichotomid ' + options.package_id)
 		resultset.close();
 	} else {
 		if (options.decision_id.match(/_decisiontree/i)) {// new tree
@@ -313,7 +311,7 @@ Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
 	console.log(options)
 	console.log('........Determining next decisionid');
 
-	var q = 'SELECT decision, decisionid FROM decisions WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
+	var q = 'SELECT decision, decisionid FROM decisions WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '"';
 	if (options.decision_id) {
 		q += ' AND decisionid ="' + options.decision_id + '"';
 	}
@@ -321,27 +319,32 @@ Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
 	console.log(q)
 	var resultset = this.dblink.execute(q);
 	if (resultset.isValidRow()) {
+		console.log('==> next decision found');
 		options.alternatives = JSON.parse(resultset.fieldByName('decision'));
 		var decisionid = resultset.fieldByName('decisionid');
-		options.name = decisionid.split('_decision_')[1];
+		if (decisionid)
+			options.name = decisionid.split('_decision_')[1];
 		resultset.close();
 		// getting meta from currenttree
-		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
+		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '"';
+		console.log(q)
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			options.meta = JSON.parse(resultset.fieldByName('meta'));
 			resultset.close();
 		}
+		console.log('..... before callback');
+		console.log(options);
 		_onsuccess(options);
 	} else {
 		options.currenttree_id = _args.currenttree_id;
-		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '"';
+		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '"';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			options.meta = JSON.parse(resultset.fieldByName('meta'));
 			resultset.close();
 		}
-		var q = 'SELECT decision,decisionid FROM decisions WHERE dichotomid = "' + options.dichotom_id + '" AND treeid="' + options.currenttree_id + '" LIMIT 0,1';
+		var q = 'SELECT decision,decisionid FROM decisions WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '" LIMIT 0,1';
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			optionsalternatives = JSON.parse(resultset.fieldByName('decision'));
@@ -354,4 +357,4 @@ Dichotom.prototype.getDecisionById = function(_args, _onsuccess) {
 	}
 
 }
-module.exports = Dichotom;
+module.exports = Taxonom;
