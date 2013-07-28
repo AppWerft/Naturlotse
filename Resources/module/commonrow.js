@@ -23,9 +23,8 @@ exports.create = function(key, val) {
 		text : val.entities2utf8(),
 		color : '#444',
 		font : {
-			fontSize : Ti.App.CONF.fontsize_title,
-			fontWeight : 'bold',
-			fontFamily : 'TheSans-B7Bold'
+			fontSize : Ti.App.CONF.fontsize_subtitle,
+			fontFamily : 'TheSans-B6SemiBold'
 		},
 	}));
 	return row;

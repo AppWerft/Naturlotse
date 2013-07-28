@@ -1,41 +1,42 @@
 exports.create = function() {
 	// /Applications/android-sdk-mac_x86/platform-tools/adb -d logcat | grep TiAPI
+
 	var self = Ti.UI.createWindow({
-		title : 'Offener Naturführer',
+		title : 'Offener Naturführer – Paketübersicht',
 		navBarHidden : true,
 		exitOnClose : true,
-		backgroundColor : 'transparent',
 		orientationModes : [Titanium.UI.PORTRAIT]
 	});
-	self.open();
+	
 	self.actind = Ti.UI.createActivityIndicator({
 		color : 'white',
 		backgroundColor : 'black',
 		width : 300,
-		message : 'Aktualisiere den Naturpiloten. ',
+		message : ' Aktualisiere den \n Naturpiloten. ',
 		height : 80,
 		zIndex : 999,
-		opacity : 0.8,
+		opacity : 0.7,
 		font : {
 			fontSize : '12dp'
 		},
 		borderRadius : '8dp'
 	});
+	self.add(self.actind);
+	self.actind.show();
 	var tv = Ti.UI.createScrollView({
-		//	backgroundColor : 'white',
 		height : Ti.UI.FILL,
-		backgroundColor : 'transparent',
+		backgroundImage : 'Default.png',
 		contentHeight : Ti.UI.SIZE,
 		width : Ti.UI.FILL,
 		contentWidth : Ti.UI.FILL,
 		layout : 'vertical'
 	});
 	self.add(tv);
-	self.add(self.actind);
-	self.actind.show();
+
 	setTimeout(function() {
 		Ti.App.Dichotom.getAllPackages({
 			onload : function(_list) {
+				tv.backgroundColor = 'white';
 				self.actind.hide();
 				tv.backgroundColor = 'white';
 				if (!_list) {
@@ -49,32 +50,36 @@ exports.create = function() {
 						if (!item['Exchange_4_Format'])
 							continue;
 						item.id = Ti.Utils.md5HexDigest(item.Title)
-						var row = require('module/dichotom.listrow').create(item)
+						var row = require('module/packagelist.row').create(item)
 						tv.add(row);
+
+						/* to decisionstree */
 						row.addEventListener('click', function(_e) {
-							var source = (_e.source.parent) ? _e.source.parent : _e.source;
-							source.setBackgroundColor('#9f9');
-							setTimeout(function() {
-								source.setBackgroundColor('white');
-							}, 100);
-							if (!source.dichotom || !source.dichotom.id)
+							var source = (_e.source.parentview) ? _e.source.parentview : _e.source;
+							console.log(_e.source);
+							if (!source.package || !source.package.id)
 								return;
+							/*source.setBackgroundColor('#9f9');
+							 setTimeout(function() {
+							 source.setBackgroundColor('white');
+							 }, 100);*/
+
 							self.actind.show();
 							self.actind.message = 'Überprüfung, ob Bilder zwischengespeichert werden können.';
 							Ti.App.Dichotom.trytocacheAllByDichotomId({
-								dichotom_id : source.dichotom.id,
+								package_id : source.package.id,
 								onload : function(_e) {
 									self.actind.hide();
 									if (_e == true) {
 										self.actind.hide();
 										var options = {
-											dichotom_id : source.dichotom.id,
-											dichotom_title : source.dichotom.Title
+											package_id : source.package.id,
+											package_title : source.package.Title
 										};
 										if (self.tab) {
-											self.tab.open(require('module/dichotom.window').create(options));
+											self.tab.open(require('module/decision.window').create(options));
 										} else {
-											require('module/dichotom.window').create(options).open();
+											require('module/decision.window').create(options).open();
 										}
 									}
 								}
@@ -83,7 +88,7 @@ exports.create = function() {
 					}
 			}
 		});
-		var demo = Ti.UI.createLabel({
+		self.demo = Ti.UI.createLabel({
 			text : 'Demo',
 			opacity : 0.25,
 			color : 'red',
@@ -98,18 +103,10 @@ exports.create = function() {
 				fontWeight : 'bold'
 			}
 		});
-		setTimeout(function() {
-			demo.animate({
-				transform : Ti.UI.create2DMatrix({
-					scale : 0.01,
-					rotate : 180
-				}),
-				duration : 7000
-			}, function() {
-				self.remove(demo)
-			});
-		}, 3000);
-		self.add(demo);
-	}, 100);
+		self.add(self.demo);
+	}, 10);
+	tv.addEventListener('scroll', function() {
+		self.demo.hide()
+	});
 	return self;
 }

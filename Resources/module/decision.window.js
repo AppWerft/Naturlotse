@@ -63,7 +63,7 @@ exports.create = function(_args) {
 				if (self.tab) {
 					self.tab.open(require('module/taxodetail.window').create(_e.rowData.item));
 				} else {
-					require('module/taxodetailwindow').create(_e.rowData.item).open();
+					require('module/taxodetail.window').create(_e.rowData.item).open();
 				}
 				return;
 			}

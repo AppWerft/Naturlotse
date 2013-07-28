@@ -20,6 +20,7 @@ exports.create = function(_image, _caption) {
 		top : 10,
 		left : 10,
 		right : 10,
+		bottom : 20,
 		height : Ti.UI.SIZE,
 		text : _caption.entities2utf8(),
 		color : '#444',

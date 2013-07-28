@@ -9,10 +9,6 @@
 	Ti.include('vendor/prototypes.js');
 	var Taxo = require('module/taxonomy.model');
 	Ti.App.Dichotom = new Taxo();
-	require('module/packagelist.window').create();
-	require('module/xenocanto.model').getIDsByLatinname({
-		latin : 'Ciconia nigra',
-		onload : function() {
-		}
-	});
+	var win =require('module/packagelist.window').create();
+	win.open();
 })();

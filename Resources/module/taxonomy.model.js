@@ -134,20 +134,25 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 		}
 	});
 }
-
+/*
+ * 
+ * 
+ * 
+ * /
+ */
 Taxonom.prototype.getAllPackages = function(_args) {
-	if (Ti.App.Properties.hasProperty('dichotoms')) {
-		console.log('DICHOTOMs exists');
-		var dichotomsstring = Ti.App.Properties.getString('dichotoms');
-		var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, 'dichotoms.json');
-		file.write(dichotomsstring);
-		var md5 = Ti.Utils.md5HexDigest(dichotomsstring);
+	if (Ti.App.Properties.hasProperty('packages')) {
+		console.log('Packages exists');
+		var packagesstring = Ti.App.Properties.getString('packages');
+		var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, 'packages.json');
+		file.write(packagesstring);
+		var md5 = Ti.Utils.md5HexDigest(packagesstring);
 		try {
-			_args.onload(JSON.parse(dichotomsstring));
+			_args.onload(JSON.parse(packagesstring));
 			return;
 		} catch(E) {
-			console.log('remove DICHOTOMLIST');
-			Ti.App.Properties.removeProperty('dichotoms');
+			console.log('remove LIST');
+			Ti.App.Properties.removeProperty('packages');
 		}
 	}
 	var dialog = Ti.UI.createAlertDialog({
@@ -170,12 +175,12 @@ Taxonom.prototype.getAllPackages = function(_args) {
 				dialog.setMessage('Wir sind im lokalen Netz, allerdings nicht wirklich im Neuland.');
 				dialog.show();
 			}
-			var dichotoms = xml.toObject(xml).Wiki.Page;
-			if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(dichotoms))) {
-				console.log('refresh DICHOTOMs');
-				Ti.App.Properties.setString('dichotoms', JSON.stringify(dichotoms));
+			var packages = xml.toObject(xml).Wiki.Page;
+			if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
+				console.log('refresh Packagelists');
+				Ti.App.Properties.setString('packages', JSON.stringify(packages));
 			}
-			_args.onload(dichotoms);
+			_args.onload(packages);
 		},
 		onerror : function() {
 			console.log(this.error);
@@ -186,49 +191,46 @@ Taxonom.prototype.getAllPackages = function(_args) {
 	xhr.send(null);
 }
 
-Taxonom.prototype.importDichotom = function(_args) {
-	
-	console.log(_args);
+Taxonom.prototype.updatePackage = function(_args) {
 	var self = this;
-	var url = _args.dichotom['Exchange_4_URI'];
-	try {
-		var mtime = _args.dichotom['Creation_Time'];
-	} catch(E) {
-		var mtime = 0;
-		console.log(E);
-	}
-	var dichotomid = Ti.Utils.md5HexDigest(_args.dichotom.Title);
-	_args.row.package_id = dichotomid;
-	var dichotom_is_actual = false;
+	var url = _args.package['Exchange_4_URI'];
+	var package_id = Ti.Utils.md5HexDigest(_args.package.Title);
+	_args.row.package_id = package_id;
+	var package_is_actual = false;
 
-	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', dichotomid);
+	/* Test how many image */
+	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow())
 		var imagestotal = resultset.fieldByName('total');
-
-	console.log(imagestotal);
 	resultset.close();
 
-	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', dichotomid);
-	if (resultset.isValidRow())
-		decisionstotal = resultset.fieldByName('total');
+	/* test how many decisions */
+	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', package_id);
+	if (resultset.isValidRow()) {
+		packagestotal = resultset.fieldByName('total');
+	}	
 	resultset.close();
-
-	var metatext = decisionstotal + ' Fragen   ';
-	if (imagestotal > 0)
+	if (packagestotal==0) {
+	//	_args.row.hide();
+	}
+	
+	/* Building of text */
+	var metatext = packagestotal + ' Fragen   ';
+	if (imagestotal > 0) 
 		metatext += imagestotal + ' Bilder';
-	console.log(metatext);
 	_args.row.meta.setText(metatext);
 
-	resultset = this.dblink.execute('SELECT mtime FROM dichotoms WHERE dichotomid=?', dichotomid);
+	/* Test if actuell */
+	resultset = this.dblink.execute('SELECT mtime FROM dichotoms WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow())
-		if (mtime == resultset.fieldByName('mtime'))
-			dichotom_is_actual = true;
+		if (_args.package['Creation_Time'] == resultset.fieldByName('mtime'))
+			package_is_actual = true;
 	resultset.close();
-	if (dichotom_is_actual) {
-		_args.row.progress.hide();
+	if (package_is_actual) {
 		return;
 	}
-	_args.row.progress.show();
+	
+	 _args.row.progress.show();
 	var xhr = Ti.Network.createHTTPClient({
 		timeout : 25000,
 		onerror : function() {
@@ -239,27 +241,36 @@ Taxonom.prototype.importDichotom = function(_args) {
 			_args.row.progress.value = _e.progress;
 		},
 		onload : function() {
-			var data = JSON.parse(xhr.responseText.striptags());
-			self.dblink.execute('DELETE  FROM  images WHERE dichotomid="' + dichotomid + '"');
-			self.dblink.execute('DELETE  FROM  dichotoms WHERE dichotomid="' + dichotomid + '"');
-			self.dblink.execute('DELETE  FROM  decisiontrees WHERE dichotomid="' + dichotomid + '"');
-			self.dblink.execute('DELETE  FROM  decisions WHERE dichotomid="' + dichotomid + '"');
-			self.dblink.execute('INSERT INTO dichotoms (dichotomid,meta,mtime) VALUES (?,?,?)', dichotomid, JSON.stringify(data.metadata), mtime);
+			var json = xhr.responseText;
+			console.log(json);
+			try {
+				var data = JSON.parse(json.striptags());
+
+			} catch (E) {
+				console.log(url);
+				_args.row.hide();
+				return
+			}
+			self.dblink.execute('DELETE  FROM  images WHERE dichotomid="' + package_id + '"');
+			self.dblink.execute('DELETE  FROM  dichotoms WHERE dichotomid="' + package_id + '"');
+			self.dblink.execute('DELETE  FROM  decisiontrees WHERE dichotomid="' + package_id + '"');
+			self.dblink.execute('DELETE  FROM  decisions WHERE dichotomid="' + package_id + '"');
+			self.dblink.execute('INSERT INTO dichotoms (dichotomid,meta,mtime) VALUES (?,?,?)', package_id, JSON.stringify(data.metadata), mtime);
 			for (var i = 0; i < data.content.length; i++) {
 				if (data.content[i].type === 'decisiontree') {
 					var treeid = data.content[i].id;
-					self.dblink.execute('INSERT INTO decisiontrees (dichotomid,treeid,meta) VALUES (?,?,?)', dichotomid, treeid, JSON.stringify(data.content[i].metadata));
+					self.dblink.execute('INSERT INTO decisiontrees (dichotomid,treeid,meta) VALUES (?,?,?)', package_id, treeid, JSON.stringify(data.content[i].metadata));
 					for (var d = 0; d < data.content[i].decision.length; d++) {
 						var decision = data.content[i].decision[d];
 						if (decision.id)
-							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', dichotomid, treeid, decision.id, JSON.stringify(decision.alternative));
+							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', package_id, treeid, decision.id, JSON.stringify(decision.alternative));
 						else
 							console.log(decision);
 						for (var a = 0; a < decision.alternative.length; a++) {
 							var media = decision.alternative[a].media && decision.alternative[a].media;
 							for (var m = 0; m < media.length; m++) {
 								if (media[m]['url_420px'])
-									self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', dichotomid, media[m]['url_420px']);
+									self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', package_id, media[m]['url_420px']);
 							}
 						}
 					}
@@ -272,7 +283,6 @@ Taxonom.prototype.importDichotom = function(_args) {
 	xhr.open('GET', url);
 	xhr.send(null);
 	data = null;
-
 }
 /*  get all for a decision (including infos about decsion tree
  *

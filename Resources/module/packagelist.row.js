@@ -1,44 +1,45 @@
-exports.create = function(item) {
+exports.create = function(_package) {
 	var self = Ti.UI.createView({
 		hasChild : false,
 		backgroundColor : 'white',
-		dichotom : item,
+		package : _package,
 		height : Ti.UI.SIZE,
 		borderWidth : 1,
 		borderColor : '#393'
 	});
 	self.add(Ti.UI.createImageView({
-		image : item.IconURL,
-		width : 70,
+		image : _package.IconURL,
+		width : '90dp',
 		height : 'auto',
-		parent : self,
-		top : 10,
-		bottom : 10,
-		left : 10
+		borderWidth : 1,
+		borderColor : 'red',
+		parentview : self,
+		top : '10dp',
+		bottom : '10dp',
+		left : '1dp'
 	}));
-	var container = Ti.UI.createView({
+	self.container = Ti.UI.createView({
 		layout : 'vertical',
 		width : Ti.UI.FILL,
-		left : 90,
-		top : 10,
-		dichotom : item,
-		parent : self,
-		right : 10,
-		bottom : 10,
+		backgroundColor : 'transparent',
 		bubbleParent : true,
+		left : '90dp',
+		top : '10dp',
+		parentview : self,
+		right : '10dp',
+		bottom : '10dp',
 		height : Ti.UI.SIZE,
 	});
-	self.add(container);
-	container.add(Ti.UI.createLabel({
+	self.add(self.container);
+	self.container.add(Ti.UI.createLabel({
 		width : Ti.UI.FILL,
 		height : Ti.UI.SIZE,
 		bottom : 0,
 		color : '#444',
-		dichotom : item,
+		text : _package.Title.entities2utf8(),
+		backgroundColor : 'transparent',
 		bubbleParent : true,
-		touchEnabled : false,
-		text : item.Title,
-		parent : self,
+		parentview : self,
 		font : {
 			fontSize : Ti.App.CONF.fontsize_title * 0.9,
 			fontFamily : 'TheSans-B7Bold'
@@ -46,7 +47,7 @@ exports.create = function(item) {
 	}));
 	self.meta = Ti.UI.createLabel({
 		height : 25,
-		text : 'Metaangaben zum Dichotom',
+		text : 'Metaangaben zum Paket',
 		top : 0,
 		width : '100%',
 		color : '#070',
@@ -55,7 +56,7 @@ exports.create = function(item) {
 			fontFamily : 'TheSans-B6SemiBold'
 		},
 	});
-	container.add(self.meta);
+	self.container.add(self.meta);
 	self.progress = Ti.UI.createProgressBar({
 		height : 5,
 		width : '90%',
@@ -63,10 +64,12 @@ exports.create = function(item) {
 		max : 1,
 		value : 0
 	});
-	container.add(self.progress);
-	Ti.App.Dichotom.importDichotom({
-		row : self,
-		dichotom : item
-	});
+	self.container.add(self.progress);
+	setTimeout(function() {
+		Ti.App.Dichotom.updatePackage({
+			row : self,
+			package : _package,
+		});
+	}, 100);
 	return self;
 }
