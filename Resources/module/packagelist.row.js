@@ -20,8 +20,8 @@ exports.create = function(_package) {
 		width : Ti.UI.FILL,
 		backgroundColor : 'transparent',
 		left : '80dp',
-		top : '10dp',
 		package : _package,
+		top : '10dp',
 		right : '10dp',
 		bottom : '10dp',
 		height : Ti.UI.SIZE,
@@ -35,7 +35,6 @@ exports.create = function(_package) {
 		color : '#444',
 		text : _package.Title.entities2utf8(),
 		backgroundColor : 'transparent',
-		parentview : self,
 		font : {
 			fontSize : Ti.App.CONF.fontsize_title * 0.9,
 			fontFamily : 'TheSans-B7Bold'
