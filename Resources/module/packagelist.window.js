@@ -5,9 +5,10 @@ exports.create = function() {
 		title : 'Offener Naturführer – Paketübersicht',
 		navBarHidden : true,
 		exitOnClose : true,
+		locked : false,
 		orientationModes : [Titanium.UI.PORTRAIT]
 	});
-	
+
 	self.actind = Ti.UI.createActivityIndicator({
 		color : 'white',
 		backgroundColor : 'black',
@@ -55,14 +56,20 @@ exports.create = function() {
 
 						/* to decisionstree */
 						row.addEventListener('click', function(_e) {
-							var source = (_e.source.parentview) ? _e.source.parentview : _e.source;
+							if (self.locked) {
+								console.log('Locked');
+								return;
+							}
+							self.locked = true;
+							setTimeout(function() {
+								self.locked = false;console.log('unlocked');
+								source.setBackgroundColor('white');
+							}, 100);
+							var source = (_e.source.parent) ? _e.source.parent : _e.source;
 							console.log(_e.source);
 							if (!source.package || !source.package.id)
 								return;
-							/*source.setBackgroundColor('#9f9');
-							 setTimeout(function() {
-							 source.setBackgroundColor('white');
-							 }, 100);*/
+							source.setBackgroundColor('#9f9');
 
 							self.actind.show();
 							self.actind.message = 'Überprüfung, ob Bilder zwischengespeichert werden können.';

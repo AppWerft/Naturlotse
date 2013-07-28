@@ -9,23 +9,19 @@ exports.create = function(_package) {
 	});
 	self.add(Ti.UI.createImageView({
 		image : _package.IconURL,
-		width : '90dp',
+		width : '80dp',
 		height : 'auto',
-		borderWidth : 1,
-		borderColor : 'red',
-		parentview : self,
 		top : '10dp',
 		bottom : '10dp',
-		left : '1dp'
+		left : 0
 	}));
 	self.container = Ti.UI.createView({
 		layout : 'vertical',
 		width : Ti.UI.FILL,
 		backgroundColor : 'transparent',
-		bubbleParent : true,
-		left : '90dp',
+		left : '80dp',
 		top : '10dp',
-		parentview : self,
+		package : _package,
 		right : '10dp',
 		bottom : '10dp',
 		height : Ti.UI.SIZE,
@@ -35,10 +31,10 @@ exports.create = function(_package) {
 		width : Ti.UI.FILL,
 		height : Ti.UI.SIZE,
 		bottom : 0,
+		package : _package,
 		color : '#444',
 		text : _package.Title.entities2utf8(),
 		backgroundColor : 'transparent',
-		bubbleParent : true,
 		parentview : self,
 		font : {
 			fontSize : Ti.App.CONF.fontsize_title * 0.9,
