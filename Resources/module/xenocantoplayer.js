@@ -42,7 +42,7 @@ exports.create = function(_win, _song) {
 					}
 				});
 				_win.actind.show();
-				_win.actind.setMessage('Lade Stimmprobe …');
+				_win.actind.setMessage(' 	Lade Stimmprobe …');
 				_player.setUrl(_song.mp3);
 				_player.start();
 				play.image = '/assets/pause.png';
