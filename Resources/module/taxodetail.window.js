@@ -43,6 +43,7 @@ exports.create = function(_item) {
 			container.appendRow(require('module/imagerow').create(_item.media[i].url_420px, caption));
 			var res = /\([\s]+(.*?)[\s]+\)/g.exec(caption);
 			if (res) {
+				self.setTitle(res[1]);
 				require('module/xenocanto.model').getSongsByLatinname({
 					latin : res[1],
 					onload : function(_songs) {
