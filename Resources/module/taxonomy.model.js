@@ -1,4 +1,5 @@
 var IMAGECACHE = 'ImageCache';
+var PACKAGEURL =  'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey';
 var CACHEDEBUG = false;
 var Taxonom = function() {
 	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms_v2');
@@ -135,9 +136,9 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 	});
 }
 /*
- * 
- * 
- * 
+ *
+ *
+ *
  * /
  */
 Taxonom.prototype.getAllPackages = function(_args) {
@@ -179,15 +180,15 @@ Taxonom.prototype.getAllPackages = function(_args) {
 			if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
 				console.log('refresh Packagelists');
 				Ti.App.Properties.setString('packages', JSON.stringify(packages));
+				_args.onload(packages);
 			}
-			_args.onload(packages);
 		},
 		onerror : function() {
 			console.log(this.error);
 		},
 		timeout : 60000
 	});
-	xhr.open('GET', 'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey');
+	xhr.open('GET',PACKAGEURL);
 	xhr.send(null);
 }
 
@@ -208,15 +209,15 @@ Taxonom.prototype.updatePackage = function(_args) {
 	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow()) {
 		packagestotal = resultset.fieldByName('total');
-	}	
-	resultset.close();
-	if (packagestotal==0) {
-	//	_args.row.hide();
 	}
-	
+	resultset.close();
+	if (packagestotal == 0) {
+		//	_args.row.hide();
+	}
+
 	/* Building of text */
 	var metatext = packagestotal + ' Fragen   ';
-	if (imagestotal > 0) 
+	if (imagestotal > 0)
 		metatext += imagestotal + ' Bilder';
 	_args.row.meta.setText(metatext);
 
@@ -229,8 +230,8 @@ Taxonom.prototype.updatePackage = function(_args) {
 	if (package_is_actual) {
 		return;
 	}
-	
-	 _args.row.progress.show();
+
+	_args.row.progress.show();
 	var xhr = Ti.Network.createHTTPClient({
 		timeout : 25000,
 		onerror : function() {
