@@ -1,5 +1,5 @@
 var IMAGECACHE = 'ImageCache';
-var PACKAGEURL =  'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey';
+var PACKAGEURL = 'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey';
 var CACHEDEBUG = false;
 var Taxonom = function() {
 	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms_v2');
@@ -142,6 +142,30 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
  * /
  */
 Taxonom.prototype.getAllPackages = function(_args) {
+	function getRemoteData() {
+		xhr = Ti.Network.createHTTPClient({
+			onload : function() {
+				var xml = new Ti.App.XMLTools(this.responseText);
+				if (!xml) {
+					dialog.setMessage('Wir sind im lokalen Netz, allerdings nicht wirklich im Neuland.');
+					dialog.show();
+				}
+				var packages = xml.toObject(xml).Wiki.Page;
+				if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
+					console.log('refresh Packagelists');
+					Ti.App.Properties.setString('packages', JSON.stringify(packages));
+					_args.onload(packages);
+				}
+			},
+			onerror : function() {
+				console.log(this.error);
+			},
+			timeout : 60000
+		});
+		xhr.open('GET', PACKAGEURL);
+		xhr.send(null);
+	}
+
 	if (Ti.App.Properties.hasProperty('packages')) {
 		console.log('Packages exists');
 		var packagesstring = Ti.App.Properties.getString('packages');
@@ -165,31 +189,20 @@ Taxonom.prototype.getAllPackages = function(_args) {
 	dialog.addEventListener('click', function() {
 		_args.onload(null);
 	});
-	if (Ti.Network.online == false) {
+	if (!Ti.App.Properties.hasProperty('packages') && Ti.Network.online == false) {
 		dialog.show();
 		return;
 	}
-	var xhr = Ti.Network.createHTTPClient({
-		onload : function() {
-			var xml = new Ti.App.XMLTools(this.responseText);
-			if (!xml) {
-				dialog.setMessage('Wir sind im lokalen Netz, allerdings nicht wirklich im Neuland.');
-				dialog.show();
-			}
-			var packages = xml.toObject(xml).Wiki.Page;
-			if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
-				console.log('refresh Packagelists');
-				Ti.App.Properties.setString('packages', JSON.stringify(packages));
-				_args.onload(packages);
-			}
-		},
-		onerror : function() {
-			console.log(this.error);
-		},
-		timeout : 60000
-	});
-	xhr.open('GET',PACKAGEURL);
-	xhr.send(null);
+	if (Ti.Network.getNetworkType() == Ti.Network.NETWORK_MOBILE) {
+		dialog.buttonNames = ['Ja', 'Nein'];
+		dialog.message = 'Sie sind nur mobile unterwegs. Wollen Sie tatsächlich den Bestimmungsführer aktualisieren?';
+		dialog.show();
+		dialog.addEventListener('click', function(_e) {
+			if (_e.index == 0)
+				getRemoteData();else {}
+		});
+	}
+	getRemoteData();
 }
 
 Taxonom.prototype.updatePackage = function(_args) {
