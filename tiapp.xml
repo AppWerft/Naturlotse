@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ti:app xmlns:ti="http://ti.appcelerator.org">
+<?xml version="1.0" encoding="UTF-8"?><ti:app xmlns:ti="http://ti.appcelerator.org">
     <id>de.appwerft.naturlotse</id>
     <name>Naturlotse</name>
     <version>1.0</version>
@@ -26,9 +25,6 @@
             <orientation>Ti.UI.UPSIDE_PORTRAIT</orientation>
         </orientations>
     </iphone>
-    
-    
-    
     <mobileweb>
         <precache/>
         <splash>
@@ -46,5 +42,5 @@
         <target device="mobileweb">false</target>
         <target device="tizen">false</target>
     </deployment-targets>
-    <sdk-version>3.1.1.GA</sdk-version>
-</ti:app>
+    <sdk-version>3.2.0</sdk-version>
+<property name="ti.deploytype">test</property></ti:app>

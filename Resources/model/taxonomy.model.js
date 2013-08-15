@@ -97,7 +97,7 @@ Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 		// switch to next page
 		if (e.index === 0) {// no cancel, the user  want to cache
 			var counter = 1;
-			var progresswindow = require('module/progress.window').create();
+			var progresswindow = require('ui/progress.window').create();
 			progresswindow.open();
 			function cacheAllImagesByPackage(_dichotom_id) {
 				console.log(Ti.Platform.availableMemory);
@@ -143,10 +143,8 @@ Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
  */
 Taxonom.prototype.getAllPackages = function(_args) {
 	function getRemoteData(_md5) {
-		console.log('Start HTTPclient');
 		xhr = Ti.Network.createHTTPClient({
 			onload : function() {
-				console.log(this.status);
 				if (this.status == 200) {
 					var xml = new Ti.App.XMLTools(this.responseText);
 					if (!xml) {
@@ -154,14 +152,12 @@ Taxonom.prototype.getAllPackages = function(_args) {
 						dialog.show();
 					}
 					var packages = xml.toObject(xml).Wiki.Page;
-					console.log('Number of Packages:' + packages.length);
 					Ti.App.Properties.setString('packages', JSON.stringify(packages));
 					if (!_md5 || _md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
 						console.log('refresh Packagelists');
 						return;
 					}
 					_args.onload(packages);
-
 				}
 				_args.onerror();
 			},
@@ -185,7 +181,7 @@ Taxonom.prototype.getAllPackages = function(_args) {
 	var packages;
 	try {
 		packages = JSON.parse(packagesstring);
-
+		_args.onload(packages);
 	} catch(E) {
 		console.log('remove LIST');
 		Ti.App.Properties.removeProperty('packages');
@@ -198,7 +194,7 @@ Taxonom.prototype.getAllPackages = function(_args) {
 			message : 'Sie sind lediglich mobil unterwegs. Wollen Sie tatsächlich die Daten des Naturlotsen aktualisieren?',
 			title : 'Datenerneuerung'
 		});
-		console.log('asking of reloading');
+		console.log('Asking of reloading');
 		dialog.show();
 		dialog.addEventListener('click', function(_e) {
 			if (_e.index == 0)
@@ -211,19 +207,46 @@ Taxonom.prototype.getAllPackages = function(_args) {
 	getRemoteData(md5);
 }
 
-Taxonom.prototype.getPackageList = function(_args) {
+Taxonom.prototype.getPackageInfo = function(_args) {
 	var self = this;
 	var url = _args.package['Exchange_4_URI'];
-	var package_id = Ti.Utils.md5HexDigest(_args.package.Title);
-	_args.row.package_id = package_id;
+	if (!url) {
+		console.log('Warning: package has no JSON-URL');
+		return;
+	}
 	var package_is_actual = false;
+	/* Test how many image */
+	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', _args.package.id);
+	if (resultset.isValidRow())
+		var imagestotal = resultset.fieldByName('total');
+	resultset.close();
+	/* test how many decisions */
+	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', _args.package.id);
+	if (resultset.isValidRow()) {
+		packagestotal = resultset.fieldByName('total');
+	}
+	resultset.close();
+	if (packagestotal == 0) {
+		_args.listitem.meta_text.text = 'Paket noch nicht geladen.';
+		return;
+	}
+	/* Building of text */
+	var metatext = packagestotal + ' Fragen   ';
+	if (imagestotal > 0)
+		metatext += imagestotal + ' Bilder';
+	_args.listitem.meta_text.text = metatext;
+}
 
+Taxonom.prototype.updatePackages = function(_args) {
+	var self = this;
+	return;
+	var url = _args.package['Exchange_4_URI'];
+	var package_is_actual = false;
 	/* Test how many image */
 	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow())
 		var imagestotal = resultset.fieldByName('total');
 	resultset.close();
-
 	/* test how many decisions */
 	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow()) {
@@ -233,13 +256,11 @@ Taxonom.prototype.getPackageList = function(_args) {
 	if (packagestotal == 0) {
 		//	_args.row.hide();
 	}
-
 	/* Building of text */
 	var metatext = packagestotal + ' Fragen   ';
 	if (imagestotal > 0)
 		metatext += imagestotal + ' Bilder';
-	_args.row.meta.setText(metatext);
-
+	_args.listitem.meta.text = metatext;
 	/* Test if actuell */
 	resultset = this.dblink.execute('SELECT mtime FROM dichotoms WHERE dichotomid=?', package_id);
 	if (resultset.isValidRow())
@@ -247,28 +268,28 @@ Taxonom.prototype.getPackageList = function(_args) {
 			package_is_actual = true;
 	resultset.close();
 	if (package_is_actual) {
-		console.log('pacjage OK');
+		console.log('package OK ======>  ' + _args.ndx);
 		return;
 	}
-
-	_args.row.progress.show();
+	return;
 	var xhr = Ti.Network.createHTTPClient({
 		timeout : 25000,
 		onerror : function() {
-			console.log(url);
+			console.log('URL=' + url);
 			console.log(this.error);
 		},
 		ondatastream : function(_e) {
-			_args.row.progress.value = _e.progress;
+			_args.listitem.progress.value = _e.progress;
+			_args.section.updateItemAt(_args.ndx, _args.listitem)
 		},
 		onload : function() {
+			console.log('download finished ' + _args.ndx);
 			var json = xhr.responseText;
 			try {
 				var data = JSON.parse(json.striptags());
-
 			} catch (E) {
 				console.log(url);
-				_args.row.hide();
+				console.log(E);
 				return
 			}
 			self.dblink.execute('DELETE  FROM  images WHERE dichotomid="' + package_id + '"');
@@ -276,6 +297,7 @@ Taxonom.prototype.getPackageList = function(_args) {
 			self.dblink.execute('DELETE  FROM  decisiontrees WHERE dichotomid="' + package_id + '"');
 			self.dblink.execute('DELETE  FROM  decisions WHERE dichotomid="' + package_id + '"');
 			self.dblink.execute('INSERT INTO dichotoms (dichotomid,meta,mtime) VALUES (?,?,?)', package_id, JSON.stringify(data.metadata), mtime);
+			console.log('Start importing into DB ' + _args.ndx);
 			for (var i = 0; i < data.content.length; i++) {
 				if (data.content[i].type === 'decisiontree') {
 					var treeid = data.content[i].id;
@@ -285,24 +307,27 @@ Taxonom.prototype.getPackageList = function(_args) {
 						if (decision.id)
 							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', package_id, treeid, decision.id, JSON.stringify(decision.alternative));
 						else
-							//console.log(decision);
-						for (var a = 0; a < decision.alternative.length; a++) {
-							var media = decision.alternative[a].media && decision.alternative[a].media;
-							for (var m = 0; m < media.length; m++) {
-								if (media[m]['url_420px'])
-									self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', package_id, media[m]['url_420px']);
+							for (var a = 0; a < decision.alternative.length; a++) {
+								var media = decision.alternative[a].media && decision.alternative[a].media;
+								for (var m = 0; m < media.length; m++) {
+									if (media[m]['url_420px'])
+										self.dblink.execute('INSERT INTO images (dichotomid,url,cached) VALUES (?,?,0)', package_id, media[m]['url_420px']);
+								}
 							}
-						}
 					}
 				}
 			}
-			_args.row.progress.hide();
-			_args.row.hasChild = true;
+			console.log('Finishing importing into DB ' + _args.ndx);
+			console.log(_args);
+			_args.listview.progress.visible = false;
+			_args.listitem.properties.accessoryType = Ti.UI.LIST_ACCESSORY_TYPE_DETAIL;
+			_args.section.updateItemAt(_args.ndx, _args.listitem)
 		}
 	});
 	xhr.open('GET', url);
 	xhr.send(null);
 	data = null;
+	console.log('Started progress ' + _args.ndx);
 }
 /*  get all for a decision (including infos about decsion tree
  *
@@ -313,14 +338,14 @@ Taxonom.prototype.getPackageList = function(_args) {
  *  onsuccess  (callback)
  */
 Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
+	console.log('........START getDecisionById');
+	console.log(_args);
 	var options = {
 		decision_id : _args.next_id,
 		package_id : _args.package_id,
 		currenttree_id : _args.currenttree_id,
 		name : ''
 	};
-	console.log('........START getDecisionById');
-	console.log(options)
 	if (!options.decision_id) {
 		var q = 'SELECT treeid, meta FROM decisiontrees WHERE dichotomid = "' + options.package_id + '" LIMIT 0,1';
 		var resultset = this.dblink.execute(q);

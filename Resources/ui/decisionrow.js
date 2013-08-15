@@ -48,7 +48,7 @@ exports.create = function(alt) {
 		text : alt.statement.striptags().entities2utf8(),
 		font : {
 			fontSize : Ti.App.CONF.fontsize_title*0.9,
-			fontFamily : 'TheSans-B7Bold'
+			fontFamily : 'OpenBaskerville-0.0.75'
 		},
 	}));
 	return self;

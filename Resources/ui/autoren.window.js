@@ -1,5 +1,5 @@
 exports.create = function(_args) {
-	var self = require('module/win').create('Autoren und andere Infos zum Bestimmungsbaum');
+	var self = require('ui/win').create('Autoren und andere Infos zum Bestimmungsbaum');
 	self.setModal(true);
 		self.backgroundColor = 'white';
 	self.addEventListener('android:back', function(_e) {
@@ -66,7 +66,7 @@ exports.create = function(_args) {
 				color : '#444',
 				font : {
 					fontSize : Ti.App.CONF.fontsize_title,
-					fontFamily : 'TheSans-B6SemiBold'
+					fontFamily : 'OpenBaskerville-0.0.75'
 				},
 			}));
 			tv.appendRow(row);

@@ -1,5 +1,7 @@
 exports.create = function(_args) {
-	var self = require('ui/win').create(_args.dichotom_title);
+	console.log('Start decisionwindow');
+	console.log(_args);
+	var self = require('ui/win').create(_args.package_title);
 	self.actind.message = 'Suche Bilder.';
 	self.actind.show();
 	Ti.App.Taxo.getDecisionById(_args, function(decision) {
@@ -25,7 +27,7 @@ exports.create = function(_args) {
 				right : 90,
 				color : 'white',
 				font : {
-					fontSize : Ti.App.CONF.fontsize_subtitle
+					fontSize : Ti.App.CONF.fontsize_subtitle,fontFamily: 'OpenBaskerville-0.0.75'
 				},
 				height : Ti.UI.SIZE
 			}));

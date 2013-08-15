@@ -34,7 +34,7 @@ exports.create = function(_title) {
 		opacity : 0.8,
 		counter : 0,
 		font : {
-			fontSize : '12dp'
+			fontSize : '12dp',fontFamily:'OpenBaskerville-0.0.75'
 		},
 		borderRadius : '8dp',
 		borderColor : 'black',
