@@ -1,5 +1,5 @@
 exports.create = function(_args) {
-	var self = require('module/win').create(_args.dichotom_title);
+	var self = require('ui/win').create(_args.dichotom_title);
 	self.actind.message = 'Suche Bilder.';
 	self.actind.show();
 	Ti.App.Dichotom.getDecisionById(_args, function(decision) {

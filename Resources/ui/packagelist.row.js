@@ -61,7 +61,7 @@ exports.create = function(_package) {
 	});
 	self.container.add(self.progress);
 	setTimeout(function() {
-		Ti.App.Dichotom.updatePackage({
+		Ti.App.Taxo.getPackageList({
 			row : self,
 			package : _package,
 		});

@@ -13,7 +13,7 @@ exports.create = function() {
 		color : 'white',
 		backgroundColor : 'black',
 		width : 300,
-		message : ' Aktualisiere den \n Naturpiloten. ',
+		message : ' Aktualisiere den \n Naturlotsen. ',
 		height : 80,
 		zIndex : 999,
 		opacity : 0.7,
@@ -35,7 +35,10 @@ exports.create = function() {
 	self.add(tv);
 
 	setTimeout(function() {
-		Ti.App.Dichotom.getAllPackages({
+		Ti.App.Taxo.getAllPackages({
+			onerror : function() {
+				self.actind.hide();
+			},
 			onload : function(_list) {
 				tv.backgroundColor = 'white';
 				self.actind.hide();
@@ -45,15 +48,21 @@ exports.create = function() {
 					self.close();
 				}
 				tv.removeAllChildren();
+				console.log(_list);
 				if (_list)
 					for (var i = 0; i < _list.length; i++) {
 						var item = _list[i].Template;
-						if (!item['Exchange_4_Format'])
+console.log(item.Title);
+						if ( typeof item.Title != 'string')
 							continue;
+						if (!item['Exchange_4_Format']) {
+							console.log('JSON in list is missing');
+							continue;
+						}
+						console.log(item.Title);
 						item.id = Ti.Utils.md5HexDigest(item.Title)
-						var row = require('module/packagelist.row').create(item)
+						var row = require('ui/packagelist.row').create(item)
 						tv.add(row);
-
 						/* to decisionstree */
 						row.addEventListener('click', function(_e) {
 							setTimeout(function() {
@@ -62,10 +71,10 @@ exports.create = function() {
 							var source = (_e.source.parentview) ? _e.source.parentview : _e.source;
 							if (!source.package || !source.package.id)
 								return;
-						//	source.setBackgroundColor('#9f9');
+							//	source.setBackgroundColor('#9f9');
 							self.actind.show();
 							self.actind.message = 'Überprüfung, ob Bilder zwischengespeichert werden können.';
-							Ti.App.Dichotom.trytocacheAllByDichotomId({
+							Ti.App.Taxo.trytocacheAllByDichotomId({
 								package_id : source.package.id,
 								onload : function(_e) {
 									self.actind.hide();
@@ -76,9 +85,9 @@ exports.create = function() {
 											package_title : source.package.Title
 										};
 										if (self.tab) {
-											self.tab.open(require('module/decision.window').create(options));
+											self.tab.open(require('ui/decision.window').create(options));
 										} else {
-											require('module/decision.window').create(options).open();
+											require('ui/decision.window').create(options).open();
 										}
 									}
 								}

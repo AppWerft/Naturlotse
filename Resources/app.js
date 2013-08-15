@@ -7,8 +7,8 @@
 	};
 	Ti.App.XMLTools = require('vendor/XMLTools');
 	Ti.include('vendor/prototypes.js');
-	var Taxo = require('module/taxonomy.model');
-	Ti.App.Dichotom = new Taxo();
-	var win =require('module/packagelist.window').create();
+	var Taxo = require('model/taxonomy.model');
+	Ti.App.Taxo = new Taxo();
+	var win =require('ui/packagelist.window').create();
 	win.open();
 })();

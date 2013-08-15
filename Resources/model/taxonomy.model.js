@@ -142,23 +142,31 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
  * /
  */
 Taxonom.prototype.getAllPackages = function(_args) {
-	function getRemoteData() {
+	function getRemoteData(_md5) {
+		console.log('Start HTTPclient');
 		xhr = Ti.Network.createHTTPClient({
 			onload : function() {
-				var xml = new Ti.App.XMLTools(this.responseText);
-				if (!xml) {
-					dialog.setMessage('Wir sind im lokalen Netz, allerdings nicht wirklich im Neuland.');
-					dialog.show();
-				}
-				var packages = xml.toObject(xml).Wiki.Page;
-				if (!md5 || md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
-					console.log('refresh Packagelists');
+				console.log(this.status);
+				if (this.status == 200) {
+					var xml = new Ti.App.XMLTools(this.responseText);
+					if (!xml) {
+						dialog.setMessage('Datenabgleich missglückt. Beim nächsten Start des Naturlotsen wird es repariert.');
+						dialog.show();
+					}
+					var packages = xml.toObject(xml).Wiki.Page;
+					console.log('Number of Packages:' + packages.length);
 					Ti.App.Properties.setString('packages', JSON.stringify(packages));
+					if (!_md5 || _md5 !== Ti.Utils.md5HexDigest(JSON.stringify(packages))) {
+						console.log('refresh Packagelists');
+						return;
+					}
 					_args.onload(packages);
+
 				}
+				_args.onerror();
 			},
 			onerror : function() {
-				console.log(this.error);
+				_args.onerror(this.error);
 			},
 			timeout : 60000
 		});
@@ -166,46 +174,44 @@ Taxonom.prototype.getAllPackages = function(_args) {
 		xhr.send(null);
 	}
 
-	if (Ti.App.Properties.hasProperty('packages')) {
-		console.log('Packages exists');
-		var packagesstring = Ti.App.Properties.getString('packages');
-		var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, 'packages.json');
-		file.write(packagesstring);
-		var md5 = Ti.Utils.md5HexDigest(packagesstring);
-		try {
-			_args.onload(JSON.parse(packagesstring));
-			return;
-		} catch(E) {
-			console.log('remove LIST');
-			Ti.App.Properties.removeProperty('packages');
-		}
+	if (!Ti.App.Properties.hasProperty('packages')) {
+		console.log('initial loading of packages');
+		var file = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, 'depot', 'packages.json');
+		Ti.App.Properties.setString('packages', file.read().text)
 	}
-	var dialog = Ti.UI.createAlertDialog({
-		cancel : 1,
-		buttonNames : ['OK'],
-		message : 'Der Naturlotse braucht anfänglich das Neuland.',
-		title : 'Netzprobleme'
-	});
-	dialog.addEventListener('click', function() {
-		_args.onload(null);
-	});
-	if (!Ti.App.Properties.hasProperty('packages') && Ti.Network.online == false) {
-		dialog.show();
-		return;
+	console.log('Loading of list from LS');
+	var packagesstring = Ti.App.Properties.getString('packages');
+	var md5 = Ti.Utils.md5HexDigest(packagesstring);
+	var packages;
+	try {
+		packages = JSON.parse(packagesstring);
+
+	} catch(E) {
+		console.log('remove LIST');
+		Ti.App.Properties.removeProperty('packages');
 	}
+	console.log('Test Networktype');
 	if (Ti.Network.getNetworkType() == Ti.Network.NETWORK_MOBILE) {
-		dialog.buttonNames = ['Ja', 'Nein'];
-		dialog.message = 'Sie sind nur mobile unterwegs. Wollen Sie tatsächlich den Bestimmungsführer aktualisieren?';
+		var dialog = Ti.UI.createAlertDialog({
+			cancel : 1,
+			buttonNames : ['Ja', 'Nein'],
+			message : 'Sie sind lediglich mobil unterwegs. Wollen Sie tatsächlich die Daten des Naturlotsen aktualisieren?',
+			title : 'Datenerneuerung'
+		});
+		console.log('asking of reloading');
 		dialog.show();
 		dialog.addEventListener('click', function(_e) {
 			if (_e.index == 0)
-				getRemoteData();else {}
+				getRemoteData(md5);
+			else {
+			}
+			_args.onload(packages);
 		});
 	}
-	getRemoteData();
+	getRemoteData(md5);
 }
 
-Taxonom.prototype.updatePackage = function(_args) {
+Taxonom.prototype.getPackageList = function(_args) {
 	var self = this;
 	var url = _args.package['Exchange_4_URI'];
 	var package_id = Ti.Utils.md5HexDigest(_args.package.Title);
@@ -241,6 +247,7 @@ Taxonom.prototype.updatePackage = function(_args) {
 			package_is_actual = true;
 	resultset.close();
 	if (package_is_actual) {
+		console.log('pacjage OK');
 		return;
 	}
 
@@ -256,7 +263,6 @@ Taxonom.prototype.updatePackage = function(_args) {
 		},
 		onload : function() {
 			var json = xhr.responseText;
-			console.log(json);
 			try {
 				var data = JSON.parse(json.striptags());
 
@@ -279,7 +285,7 @@ Taxonom.prototype.updatePackage = function(_args) {
 						if (decision.id)
 							self.dblink.execute('INSERT INTO decisions (dichotomid,treeid,decisionid,decision) VALUES (?,?,?,?)', package_id, treeid, decision.id, JSON.stringify(decision.alternative));
 						else
-							console.log(decision);
+							//console.log(decision);
 						for (var a = 0; a < decision.alternative.length; a++) {
 							var media = decision.alternative[a].media && decision.alternative[a].media;
 							for (var m = 0; m < media.length; m++) {
