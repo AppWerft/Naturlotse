@@ -1,7 +1,6 @@
 exports.packages = {
 	properties : {
 		backgroundColor : 'white'
-
 	},
 	childTemplates : [{
 		type : 'Ti.UI.ImageView',
@@ -12,7 +11,7 @@ exports.packages = {
 			top : '10dip',
 			left : '-10dip'
 		}
-	}, {
+	}, {       
 		type : 'Ti.UI.View',
 		properties : {
 			width : Ti.UI.FILL,
