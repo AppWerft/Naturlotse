@@ -63,7 +63,7 @@ Taxonom.prototype.getImage = function(_args) {
 	}
 }
 
-Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
+Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 	console.log('START CACHING');
 	var total = 0;
 	var q = 'SELECT COUNT(*) AS total FROM images WHERE dichotomid = "' + _args.package_id + '"';
@@ -99,7 +99,7 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 			var counter = 1;
 			var progresswindow = require('module/progress.window').create();
 			progresswindow.open();
-			function cacheAllImagesByDichotom(_dichotom_id) {
+			function cacheAllImagesByPackage(_dichotom_id) {
 				console.log(Ti.Platform.availableMemory);
 				var q = 'SELECT url FROM images WHERE cached=0  AND dichotomid = "' + _dichotom_id + '" LIMIT 0,1';
 				resultset = self.dblink.execute(q);
@@ -118,7 +118,7 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 							/* next row until all ros are cached*/
 							if (_res.ok == true) {
 								self.dblink.execute('UPDATE images SET cached=1 WHERE url=? AND dichotomid=?', url, _dichotom_id);
-								cacheAllImagesByDichotom(_dichotom_id);
+								cacheAllImagesByPackage(_dichotom_id);
 							} else {
 								console.log('Error mirroring');
 							}
@@ -131,7 +131,7 @@ Taxonom.prototype.trytocacheAllByDichotomId = function(_args) {
 				}
 			}
 
-			cacheAllImagesByDichotom(_args.package_id);
+			cacheAllImagesByPackage(_args.package_id);
 		}
 	});
 }

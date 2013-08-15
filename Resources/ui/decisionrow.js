@@ -19,7 +19,7 @@ exports.create = function(alt) {
 			bubbleParent : true
 		});
 		self.add(imageview);
-		Ti.App.Dichotom.getImage({
+		Ti.App.Taxo.getImage({
 			url : self.image,
 			onload : function(_res) {
 				imageview.setImage(_res.path)

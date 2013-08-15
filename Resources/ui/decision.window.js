@@ -2,7 +2,7 @@ exports.create = function(_args) {
 	var self = require('ui/win').create(_args.dichotom_title);
 	self.actind.message = 'Suche Bilder.';
 	self.actind.show();
-	Ti.App.Dichotom.getDecisionById(_args, function(decision) {
+	Ti.App.Taxo.getDecisionById(_args, function(decision) {
 		self.actind.hide();
 		if (!decision)
 			return self;
@@ -51,7 +51,7 @@ exports.create = function(_args) {
 		var rows = [];
 		if (decision.alternatives)
 			for (var i = 0; i < decision.alternatives.length; i++) {
-				rows[i] = require('module/decisionrow').create(decision.alternatives[i]);
+				rows[i] = require('ui/decisionrow').create(decision.alternatives[i]);
 			}
 		tv.setData(rows);
 		tv.addEventListener('click', function(_e) {
@@ -61,9 +61,9 @@ exports.create = function(_args) {
 			if (!next_id || next_id.match(/_wikipage/i)) {
 				var win = self.actind.message = 'Hole Detailinfos …';
 				if (self.tab) {
-					self.tab.open(require('module/taxodetail.window').create(_e.rowData.item));
+					self.tab.open(require('ui/taxodetail.window').create(_e.rowData.item));
 				} else {
-					require('module/taxodetail.window').create(_e.rowData.item).open();
+					require('ui/taxodetail.window').create(_e.rowData.item).open();
 				}
 				return;
 			}
@@ -73,9 +73,9 @@ exports.create = function(_args) {
 				currenttree_id : decision.currenttree_id
 			};
 			if (self.tab) {
-				self.tab.open(require('module/decision.window').create(options));
+				self.tab.open(require('ui/decision.window').create(options));
 			} else {
-				require('module/decision.window').create(options).open();
+				require('ui/decision.window').create(options).open();
 			}
 		});
 		if (autors)
@@ -84,9 +84,9 @@ exports.create = function(_args) {
 					meta : _e.source.meta
 				};
 				if (self.tab) {
-					self.tab.open(require('module/autoren.window').create(options));
+					self.tab.open(require('ui/autoren.window').create(options));
 				} else {
-					require('module/autoren.window').create(options).open();
+					require('ui/autoren.window').create(options).open();
 				}
 			})
 	});

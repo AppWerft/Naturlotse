@@ -9,7 +9,7 @@ exports.create = function(_image, _caption) {
 		height : 'auto'
 	});
 	row.add(image);
-	Ti.App.Dichotom.getImage({
+	Ti.App.Taxo.getImage({
 		url : _image,
 		onload : function(_e) {
 			image.image = _e.path

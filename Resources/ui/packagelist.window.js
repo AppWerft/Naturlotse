@@ -74,7 +74,7 @@ console.log(item.Title);
 							//	source.setBackgroundColor('#9f9');
 							self.actind.show();
 							self.actind.message = 'Überprüfung, ob Bilder zwischengespeichert werden können.';
-							Ti.App.Taxo.trytocacheAllByDichotomId({
+							Ti.App.Taxo.trytocacheAllByPackageId({
 								package_id : source.package.id,
 								onload : function(_e) {
 									self.actind.hide();
