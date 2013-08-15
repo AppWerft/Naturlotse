@@ -1,7 +1,4 @@
 exports.packages = {
-	events : {
-		click : clickCB
-	},
 	properties : {
 		backgroundColor : 'white'
 
