@@ -17,29 +17,33 @@ exports.create = function(alt) {
 			onload : function(_res) {
 				var iv = null;
 				function onFinishrendering(_e) {
-					console.log(_e);
-					var size = _e.source.size;
-					console.log('Info: image ratio=' + size.height / size.width);
-					//self.setHeight(Ti.UI.SIZE);
+					setTimeout(function() {
+						var ratio = parseFloat(parseFloat(iv.size.height) / parseFloat(iv.size.width));
+						console.log('Info: image ratio= ' + ratio);
+						var height = parseFloat(WIDTH) * ratio + 50;
+						console.log('Info: height of image: ' + height);
+
+					}, 100);
+
+					if (!isNaN(height))
+						self.setHeight(height);
 					iv.removeEventListener('postlayout', onFinishrendering);
 				}
 
 				iv = Ti.UI.createImageView({
-					width : '100%',
-					height : 'auto',
-					image : _res.path,
-					height : 'auto'
+
+					image : _res.path
 				});
 				self.add(iv);
 				iv.addEventListener('postlayout', onFinishrendering);
 			}
 		});
-	} 
+	}
 	self.add(Ti.UI.createLabel({
 		width : Ti.UI.FILL,
 		left : 10,
 		top : 10,
-		right : 10,
+		right : 0,
 		height : Ti.UI.SIZE,
 		bottom : 5,
 		color : '#444',
