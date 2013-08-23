@@ -9,10 +9,9 @@ exports.create = function() {
 		orientationModes : [Titanium.UI.PORTRAIT]
 	});
 	var onitemclick = function(_event) {
-		console.log(_event);return;
+		console.log(_event.itemId);
 		self.actind.show();
 		self.actind.message = ' Start Bilderspeicherung.';
-
 		Ti.App.Taxo.trytocacheAllByPackageId({
 			package_id : _event.itemId,
 			onload : function(_e) {
@@ -32,7 +31,7 @@ exports.create = function() {
 				}
 			}
 		});
-	}
+	};
 	self.actind = Ti.UI.createActivityIndicator({
 		color : 'white',
 		backgroundColor : 'black',
@@ -94,6 +93,5 @@ exports.create = function() {
 	});
 
 	self.listView.addEventListener('itemclick', onitemclick);
-
 	return self;
-}
+};

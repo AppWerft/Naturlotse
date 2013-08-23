@@ -10,5 +10,5 @@
 	var Taxo = require('model/taxonomy.model');
 	Ti.App.Taxo = new Taxo();
 	require('ui/package.listview.window').create();
-	
 })();
+///Applications/android-sdk-mac_x86/platform-tools/adb -d logcat | grep TiAPI

@@ -11,18 +11,18 @@ exports.create = function(alt) {
 	if (alt.media[0] && alt.media[0].url_420px) {
 		self.image = alt.media[0].url_420px;
 		self.layout = 'vertical';
-		var imageview = Ti.UI.createImageView({
-			top : 10,
-			left : 10,
-			width : Ti.UI.FILL,
-			height : 'auto',
-			bubbleParent : true
-		});
-		self.add(imageview);
-		Ti.App.Taxo.getImage({
+
+		Ti.App.Taxo.getImage({// make caching
 			url : self.image,
 			onload : function(_res) {
-				imageview.setImage(_res.path)
+				self.add(Ti.UI.createImageView({
+					top : '10dp',
+					bottom : '10dp',
+					width : Ti.UI.FILL,
+					height : Ti.UI.SIZE,
+					image : _res.path
+				}));
+
 			}
 		});
 	} else {
@@ -47,9 +47,9 @@ exports.create = function(alt) {
 		color : '#444',
 		text : alt.statement.striptags().entities2utf8(),
 		font : {
-			fontSize : Ti.App.CONF.fontsize_title*0.9,
+			fontSize : Ti.App.CONF.fontsize_title * 0.9,
 			fontFamily : 'OpenBaskerville-0.0.75'
 		},
 	}));
 	return self;
-}
+};
