@@ -4,51 +4,49 @@ exports.create = function(alt) {
 		backgroundColor : 'white',
 		next_id : alt.result.next_id,
 		item : alt,
-		height : Ti.UI.SIZE,
+		layout : 'vertical',
+		height : 320,
 		borderWidth : 1,
 		borderColor : 'gray'
 	});
 	if (alt.media[0] && alt.media[0].url_420px) {
-		self.image = alt.media[0].url_420px;
-		self.layout = 'vertical';
-
+		self.image_url = alt.media[0].url_420px;
+		var WIDTH = Ti.Platform.DisplayCaps.platformWidth * 0.9;
 		Ti.App.Taxo.getImage({// make caching
-			url : self.image,
+			url : self.image_url,
 			onload : function(_res) {
-				self.add(Ti.UI.createImageView({
-					top : '10dp',
-					bottom : '10dp',
-					width : Ti.UI.FILL,
-					height : Ti.UI.SIZE,
-					image : _res.path
-				}));
+				var iv = null;
+				function onFinishrendering(_e) {
+					console.log(_e);
+					var size = _e.source.size;
+					console.log('Info: image ratio=' + size.height / size.width);
+					//self.setHeight(Ti.UI.SIZE);
+					iv.removeEventListener('postlayout', onFinishrendering);
+				}
 
+				iv = Ti.UI.createImageView({
+					width : '100%',
+					height : 'auto',
+					image : _res.path,
+					height : 'auto'
+				});
+				self.add(iv);
+				iv.addEventListener('postlayout', onFinishrendering);
 			}
 		});
-	} else {
-		self.add(Ti.UI.createImageView({
-			image : 'assets/naturlogo.png',
-			defaultImage : '/assets/naturlogo.png',
-			top : 10,
-			left : 5,
-			width : 80,
-			height : 80,
-			opacity : 0.7,
-			bubbleParent : true
-		}));
-	}
+	} 
 	self.add(Ti.UI.createLabel({
 		width : Ti.UI.FILL,
-		left : (self.image) ? 10 : 100,
+		left : 10,
 		top : 10,
 		right : 10,
 		height : Ti.UI.SIZE,
-		bottom : 10,
+		bottom : 5,
 		color : '#444',
 		text : alt.statement.striptags().entities2utf8(),
 		font : {
-			fontSize : Ti.App.CONF.fontsize_title * 0.9,
-			fontFamily : 'OpenBaskerville-0.0.75'
+			fontSize : Ti.App.CONF.fontsize_title,
+			fontFamily : 'OpenBaskerville0.0.75'
 		},
 	}));
 	return self;

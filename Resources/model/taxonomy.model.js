@@ -20,11 +20,15 @@ Taxonom.prototype.getImage = function(_args) {
 	var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory, IMAGECACHE, Ti.Utils.md5HexDigest(_args.url) + '@2x.png');
 	if (file.exists()) {
 		self.dblink.execute('UPDATE images SET cached=1 WHERE url=?', _args.url);
-		_args.onload({
+		if (_args.onload && typeof _args.onload === 'function')
+			_args.onload({
+				path : file.nativePath,
+				ok : true
+			});
+		return {
 			path : file.nativePath,
 			ok : true
-		});
-		return;
+		};
 	} else {
 		var xhr = Ti.Network.createHTTPClient({
 			timeout : 20000,
@@ -62,6 +66,7 @@ Taxonom.prototype.getImage = function(_args) {
 		xhr.open('GET', _args.url);
 		xhr.send(null);
 	}
+	return null;
 };
 
 Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
