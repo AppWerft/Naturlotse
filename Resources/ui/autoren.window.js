@@ -73,14 +73,14 @@ exports.create = function(_args) {
 		}
 	}
 	if (_args.meta.created)
-		tv.appendRow(require('module/commonrow').create('Erstellung', require('vendor/moment')(_args.meta.created).format('DD.MM.YYYY')));
+		tv.appendRow(require('ui/commonrow').create('Erstellung', require('vendor/moment')(_args.meta.created).format('DD.MM.YYYY')));
 	if (_args.meta.modified)
-		tv.appendRow(require('module/commonrow').create('letzte Änderung', require('vendor/moment')(_args.meta.modified).format('DD.MM.YYYY')));
+		tv.appendRow(require('ui/commonrow').create('letzte Änderung', require('vendor/moment')(_args.meta.modified).format('DD.MM.YYYY')));
 	if (_args.meta.audience)
-		tv.appendRow(require('module/commonrow').create('Zielgruppe', _args.meta.audience));
+		tv.appendRow(require('ui/commonrow').create('Zielgruppe', _args.meta.audience));
 	if (_args.meta.source)
-		tv.appendRow(require('module/commonrow').create('Quelle', _args.meta.source));
+		tv.appendRow(require('ui/commonrow').create('Quelle', _args.meta.source));
 	if (_args.meta.geoscope)
-		tv.appendRow(require('module/commonrow').create('Verbreitung', _args.meta.geoscope));
+		tv.appendRow(require('ui/commonrow').create('Verbreitung', _args.meta.geoscope));
 	return self;
 }

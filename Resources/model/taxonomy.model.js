@@ -1,6 +1,7 @@
 var IMAGECACHE = 'ImageCache';
 var PACKAGEURL = 'http://offene-naturfuehrer.de/w/index.php?title=Special:TemplateParameterExport&action=submit&do=export&template=MobileKey';
 var CACHEDEBUG = false;
+
 var Taxonom = function() {
 	this.dblink = Ti.Database.install('/depot/dichotoms.sql', 'dichotoms_v2');
 	this.package_id = null;
@@ -12,7 +13,7 @@ var Taxonom = function() {
 		g.createDirectory();
 	};
 	return this;
-}
+};
 
 Taxonom.prototype.getImage = function(_args) {
 	var self = this;
@@ -61,7 +62,7 @@ Taxonom.prototype.getImage = function(_args) {
 		xhr.open('GET', _args.url);
 		xhr.send(null);
 	}
-}
+};
 
 Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 	console.log('START CACHING');
@@ -134,7 +135,7 @@ Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 			cacheAllImagesByPackage(_args.package_id);
 		}
 	});
-}
+};
 /*
  *
  *
@@ -205,7 +206,7 @@ Taxonom.prototype.getAllPackages = function(_args) {
 		});
 	}
 	getRemoteData(md5);
-}
+};
 
 Taxonom.prototype.getPackageInfo = function(_args) {
 	var self = this;
@@ -235,7 +236,7 @@ Taxonom.prototype.getPackageInfo = function(_args) {
 	if (imagestotal > 0)
 		metatext += imagestotal + ' Bilder';
 	_args.listitem.meta_text.text = metatext;
-}
+};
 
 Taxonom.prototype.updatePackages = function(_args) {
 	var self = this;
@@ -328,7 +329,7 @@ Taxonom.prototype.updatePackages = function(_args) {
 	xhr.send(null);
 	data = null;
 	console.log('Started progress ' + _args.ndx);
-}
+};
 /*  get all for a decision (including infos about decsion tree
  *
  *  args are:
@@ -351,9 +352,9 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			options.currenttree_id = resultset.fieldByName('treeid');
-			console.log('no nex_id ===> id initial setting to start-treeId "' + options.currenttree_id + '"')
+			console.log('no nex_id ===> id initial setting to start-treeId "' + options.currenttree_id + '"');
 		} else
-			console.log('no result by this dichotomid ' + options.package_id)
+			console.log('no result by this dichotomid ' + options.package_id);
 		resultset.close();
 	} else {
 		if (options.decision_id.match(/_decisiontree/i)) {// new tree
@@ -410,6 +411,6 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 			_onsuccess(options)
 		}
 	}
+};
 
-}
 module.exports = Taxonom;

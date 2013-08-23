@@ -8,6 +8,31 @@ exports.create = function() {
 		locked : false,
 		orientationModes : [Titanium.UI.PORTRAIT]
 	});
+	var onitemclick = function(_event) {
+		console.log(_event);return;
+		self.actind.show();
+		self.actind.message = ' Start Bilderspeicherung.';
+
+		Ti.App.Taxo.trytocacheAllByPackageId({
+			package_id : _event.itemId,
+			onload : function(_e) {
+				self.actind.hide();
+				if (_e == true) {
+					self.actind.hide();
+					var options = {
+						package_id : _event.itemId,
+						level : 'start',
+						package_title : 'Title of decision'
+					};
+					if (self.tab) {
+						self.tab.open(require('ui/decision.window').create(options));
+					} else {
+						require('ui/decision.window').create(options).open();
+					}
+				}
+			}
+		});
+	}
 	self.actind = Ti.UI.createActivityIndicator({
 		color : 'white',
 		backgroundColor : 'black',
@@ -26,7 +51,7 @@ exports.create = function() {
 	self.listView = Ti.UI.createListView({
 		backgroundImage : '/Default.png',
 		templates : {
-			'template' : require('ui/TEMPLATES').packages
+			'template' : require('ui/TEMPLATES').create(onitemclick)
 		},
 		defaultItemTemplate : 'template',
 	});
@@ -67,31 +92,8 @@ exports.create = function() {
 				console.log('Warning: result from JSON invalide');
 		}
 	});
-	self.listView.addEventListener('itemclick', function(_event) {
-		console.log(_event);
-		self.actind.show();
-		self.actind.message = ' Start Bilderspeicherung.';
-		
-		Ti.App.Taxo.trytocacheAllByPackageId({
-			package_id : _event.itemId,
-			onload : function(_e) {
-				self.actind.hide();
-				if (_e == true) {
-					self.actind.hide();
-					var options = {
-						package_id : _event.itemId,
-						level : 'start',
-						package_title : 'Title of decision'
-					};
-					if (self.tab) {
-						self.tab.open(require('ui/decision.window').create(options));
-					} else {
-						require('ui/decision.window').create(options).open();
-					}
-				}
-			}
-		});
-	});
+
+	self.listView.addEventListener('itemclick', onitemclick);
 
 	return self;
 }
