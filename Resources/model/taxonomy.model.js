@@ -94,7 +94,7 @@ Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 		cancel : 1,
 		buttonNames : ['Ja, runterladen', 'Nein, Abbruch'],
 		message : 'Insgesamt besteht die Bestimmung aus ' + total + ' Bildern. \n\nMöchten Sie die ' + images.length + ' Bilder für den Freiimfelde-Gebrauch herunterladen?',
-		title : 'Für netzlosen Gebrauch vorbereiten …'
+		title : 'Für netzlosen Gebrauch vorbereiten'
 	});
 	dialog.show();
 	var self = this;

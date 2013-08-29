@@ -1,7 +1,7 @@
 exports.create = function() {
 	var self = Ti.UI.createWindow({});
 	var bg = Ti.UI.createView({
-		backgroundColor : 'black',
+		backgroundImage : '/assets/grass.jpg',
 		opacity : 0.7
 	});
 	self.add(bg);
@@ -16,7 +16,6 @@ exports.create = function() {
 		bottom : 0,
 		height : 100,
 		layout : 'vertical',
-		backgroundImage : '/assets/way.png',
 		height : Ti.UI.SIZE
 	});
 	self.add(container);
@@ -41,11 +40,11 @@ exports.create = function() {
 			max : 1,
 			value : 0
 		}),
-	}
+	};
 	container.add(self.progress.detail);
 	container.add(self.progress.total);
 	self.progress.detail.show();
 	self.progress.total.show();
 	return self;
-}
+};
 
