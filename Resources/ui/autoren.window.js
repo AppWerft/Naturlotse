@@ -3,10 +3,10 @@ exports.create = function(_args) {
 	self.setModal(true);
 		self.backgroundColor = 'white';
 	self.addEventListener('android:back', function(_e) {
-		self.close()
+		self.close();
 	});
 	self.addEventListener('longpress', function(_e) {
-		self.close()
+		self.close();
 	});
 	if (Ti.Platform.name !== 'android') {
 		var leftButton = Ti.UI.createButton({
@@ -16,9 +16,9 @@ exports.create = function(_args) {
 		leftButton.addEventListener('click', function() {
 			self.close({
 				animated : true
-			})
+			});
 		});
-	}
+	};
 	var autorenimg = {
 		'Paul Bachhausen' : 'http://www.salamanderseiten.de/Paul.jpg',
 		'Gregor Hagedorn' : 'http://www.naturkundemuseum-berlin.de/uploads/pics/nrodegah-gregor-re00.jpg',
@@ -37,7 +37,7 @@ exports.create = function(_args) {
 		'Andreas Plank' : 'http://www.jki.bund.de/typo3temp/pics/bf16f5f2c8.jpg',
 		'A.Plank' : 'http://www.jki.bund.de/typo3temp/pics/bf16f5f2c8.jpg',
 		'N.Poelloth' : ''
-	}
+	};
 	var tv = Ti.UI.createTableView();
 	self.add(tv);
 	if (_args.meta.creator) {
@@ -83,4 +83,4 @@ exports.create = function(_args) {
 	if (_args.meta.geoscope)
 		tv.appendRow(require('ui/commonrow').create('Verbreitung', _args.meta.geoscope));
 	return self;
-}
+};

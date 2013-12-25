@@ -28,4 +28,4 @@ exports.create = function(key, val) {
 		},
 	}));
 	return row;
-}
+};

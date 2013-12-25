@@ -12,7 +12,7 @@ exports.create = function(_image, _caption) {
 	Ti.App.Taxo.getImage({
 		url : _image,
 		onload : function(_e) {
-			image.image = _e.path
+			image.image = _e.path;
 		}
 	});
 	row.add(Ti.UI.createView({
@@ -34,4 +34,5 @@ exports.create = function(_image, _caption) {
 		},
 	}));
 	return row;
-}
+};
+

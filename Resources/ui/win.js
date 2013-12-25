@@ -8,7 +8,7 @@ exports.create = function(_title) {
 	self.addEventListener('android:back', function(_e) {
 		console.log('CLOSE ======');
 		self.close();
-		return false
+		return false;
 	});
 	if (Ti.Platform.name !== 'android') {
 		self.navBarHidden = false;
@@ -21,7 +21,7 @@ exports.create = function(_title) {
 		leftButton.addEventListener('click', function() {
 			self.close({
 				animated : true
-			})
+			});
 		});
 	}
 	self.actind = Ti.UI.createActivityIndicator({
@@ -58,4 +58,4 @@ exports.create = function(_title) {
 		//	console.log('!!!!!!!!!! blur  ' + self.title);
 	});
 	return self;
-}
+};

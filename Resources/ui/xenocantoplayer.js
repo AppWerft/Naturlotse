@@ -68,4 +68,4 @@ exports.create = function(_win, _song) {
 	self.add(self.sono);
 	self.add(self.navi);
 	return self;
-}
+};

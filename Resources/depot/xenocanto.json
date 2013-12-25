@@ -9,7 +9,7 @@
       legendText: null
     }
   ],
-  markers: [
+  markers : [
     {
       m: 0,
       lat: -15.25,
@@ -20015,4 +20015,3 @@
     species: "8503",
     recordings: "120093"
   }
-}

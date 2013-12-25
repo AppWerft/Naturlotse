@@ -63,6 +63,5 @@ exports.create = function(_item) {
 
 		}
 	}
-
 	return self;
-}
+};

@@ -13,15 +13,15 @@ exports.create = function() {
 		self.actind.show();
 		self.actind.message = ' Start Bilderspeicherung.';
 		Ti.App.Taxo.trytocacheAllByPackageId({
-			package_id : _event.itemId,
+			paket_id : _event.itemId,
 			onload : function(_e) {
 				self.actind.hide();
 				if (_e == true) {
 					self.actind.hide();
 					var options = {
-						package_id : _event.itemId,
+						paket_id : _event.itemId,
 						level : 'start',
-						package_title : 'Title of decision'
+						paket_title : 'Title of decision'
 					};
 					if (self.tab) {
 						self.tab.open(require('ui/decision.window').create(options));
@@ -60,38 +60,37 @@ exports.create = function() {
 		onerror : function() {
 			self.actind.hide();
 		},
-		onload : function(_listofpackages) {
+		onload : function(_listofpakets) {
 			self.actind.hide();
-			if (_listofpackages && _listofpackages.isArray) {
+			if (_listofpakets && _listofpakets.isArray) {
 				var items = [];
 				var section = Ti.UI.createListSection({
 					items : items
 				});
-				console.log(_listofpackages.length + ' Packages.');
-				for (var i = 0; i < _listofpackages.length; i++) {
-					var package = _listofpackages[i].Template;
-					if (!package) {
+				console.log(_listofpakets.length + ' Packages.');
+				for (var i = 0; i < _listofpakets.length; i++) {
+					var paket = _listofpakets[i].Template;
+					if (!paket) {
 						continue;
-						console.log('Warning: package has no Template')
+						console.log('Warning: paket has no Template');
 					}
-					if ( typeof package.Title != 'string' || !package['Exchange_4_Format']) {
-						console.log('Warning: invalid package in list');
+					if ( typeof paket.Title != 'string' || !paket['Exchange_4_Format']) {
+						console.log('Warning: invalid paket in list');
 						continue;
 					}
-					var item = require('ui/package.listitem').create({
-						package : package,
+					var item = require('ui/paket.listitem').create({
+						paket : paket,
 					});
 					if (item)
 						items.push(item);
 				}
 				section.setItems(items);
 				self.listView.setSections([section]);
-				//Ti.App.Taxo.updateAllPackages(_listofpackages);
+				//Ti.App.Taxo.updateAllPackages(_listofpakets);
 			} else
 				console.log('Warning: result from JSON invalide');
 		}
 	});
-
 	self.listView.addEventListener('itemclick', onitemclick);
 	return self;
 };

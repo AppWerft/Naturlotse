@@ -49,7 +49,7 @@ exports.create = function(_args) {
 			backgroundColor : 'transparent',
 			top : (decision.meta) ? 90 : 0
 		});
-		self.add(tv)
+		self.add(tv);
 		var rows = [];
 		if (decision.alternatives)
 			for (var i = 0; i < decision.alternatives.length; i++) {
@@ -90,7 +90,7 @@ exports.create = function(_args) {
 				} else {
 					require('ui/autoren.window').create(options).open();
 				}
-			})
+			});
 	});
 	return self;
-}
+};
