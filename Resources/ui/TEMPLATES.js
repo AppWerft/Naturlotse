@@ -6,6 +6,10 @@ exports.create = function() {
 		childTemplates : [{
 			type : 'Ti.UI.ImageView',
 			bindId : 'pic_url',
+			events : {
+				click : function() {
+				}
+			},
 			bubbleParent : false,
 			properties : {
 				width : '100dip',
@@ -24,7 +28,7 @@ exports.create = function() {
 				bottom : '5dip',
 				right : '20dip',
 			},
-			
+
 			childTemplates : [{
 				type : 'Ti.UI.Label',
 				bindId : 'package_name',
@@ -55,4 +59,4 @@ exports.create = function() {
 			}]
 		}]
 	};
-};
+}; 
