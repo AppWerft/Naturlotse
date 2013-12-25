@@ -12,32 +12,32 @@ exports.create = function() {
 			},
 			bubbleParent : false,
 			properties : {
-				width : '100dip',
+				width : '75dp',
 				height : 'auto',
-				top : '10dip',
-				left : '-10dip'
+				top : '10dp',
+				left : '10dp'
 			}
 		}, {
 			type : 'Ti.UI.View',
 			properties : {
 				width : Ti.UI.FILL,
 				layout : 'vertical',
-				left : '90dip',
+				left : '95dp',
 				height : Ti.UI.SIZE,
-				top : '5dip',
-				bottom : '5dip',
-				right : '20dip',
+				top : '5dp',
+				bottom : '5dp',
+				right : '20dp',
 			},
-
 			childTemplates : [{
 				type : 'Ti.UI.Label',
-				bindId : 'package_name',
+				bindId : 'paket_name',
 				properties : {
 					color : '#222',
 					width : Ti.UI.FILL,
+					text :'Titel des Pakets',
 					height : Ti.UI.SIZE,
 					font : {
-						fontSize : '18dip',
+						fontSize : '18dp',
 						fontFamily : 'OpenBaskerville0.0.75'
 					},
 					left : 0,
@@ -50,11 +50,11 @@ exports.create = function() {
 					color : '#070',
 					height : Ti.UI.SIZE,
 					font : {
-						fontSize : '13dip',
+						fontSize : '13dp',
 						fontFamily : 'OpenBaskerville0.0.75'
 					},
 					left : 0,
-					top : '5dip'
+					top : '5dp'
 				}
 			}]
 		}]

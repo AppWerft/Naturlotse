@@ -34,7 +34,7 @@ Taxonom.prototype.getImage = function(_args) {
 			timeout : 20000,
 			ondatastream : function(_e) {
 				if (_args.onprogress && typeof _args.onprogress == 'function') {
-					_args.onprogress(_e.progress)
+					_args.onprogress(_e.progress);
 				}
 			},
 			onload : function(_e) {
@@ -75,7 +75,7 @@ Taxonom.prototype.trytocacheAllByPackageId = function(_args) {
 	var q = 'SELECT COUNT(*) AS total FROM images WHERE dichotomid = "' + _args.package_id + '"';
 	var resultset = this.dblink.execute(q);
 	if (resultset.isValidRow()) {
-		total = resultset.fieldByName('total')
+		total = resultset.fieldByName('total');
 	}
 	var cache = (CACHEDEBUG) ? 1 : 0;
 	var q = 'SELECT * FROM images WHERE cached=' + cache + ' AND dichotomid = "' + _args.package_id + '"';
@@ -175,11 +175,10 @@ Taxonom.prototype.getAllPackages = function(_args) {
 		xhr.open('GET', PACKAGEURL);
 		xhr.send(null);
 	}
-
 	if (!Ti.App.Properties.hasProperty('packages')) {
 		console.log('initial loading of packages');
 		var file = Ti.Filesystem.getFile(Ti.Filesystem.resourcesDirectory, 'depot', 'packages.json');
-		Ti.App.Properties.setString('packages', file.read().text)
+		Ti.App.Properties.setString('packages', file.read().text);
 	}
 	console.log('Loading of list from LS');
 	var packagesstring = Ti.App.Properties.getString('packages');
@@ -187,12 +186,13 @@ Taxonom.prototype.getAllPackages = function(_args) {
 	var packages;
 	try {
 		packages = JSON.parse(packagesstring);
+		console.log('Info: try to parse packages from local storage');
 		_args.onload(packages);
 	} catch(E) {
 		console.log('remove LIST');
 		Ti.App.Properties.removeProperty('packages');
 	}
-	console.log('Test Networktype');
+	console.log('Info: Test Networktype');
 	if (Ti.Network.getNetworkType() == Ti.Network.NETWORK_MOBILE) {
 		var dialog = Ti.UI.createAlertDialog({
 			cancel : 1,
@@ -215,19 +215,19 @@ Taxonom.prototype.getAllPackages = function(_args) {
 
 Taxonom.prototype.getPackageInfo = function(_args) {
 	var self = this;
-	var url = _args.package['Exchange_4_URI'];
+	var url = _args.paket['Exchange_4_URI'];
 	if (!url) {
 		console.log('Warning: package has no JSON-URL');
 		return;
 	}
 	var package_is_actual = false;
 	/* Test how many image */
-	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', _args.package.id);
+	var resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM images WHERE dichotomid=?', _args.paket.id);
 	if (resultset.isValidRow())
 		var imagestotal = resultset.fieldByName('total');
 	resultset.close();
 	/* test how many decisions */
-	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', _args.package.id);
+	resultset = this.dblink.execute('SELECT COUNT(*) AS total FROM decisions WHERE dichotomid=?', _args.paket.id);
 	if (resultset.isValidRow()) {
 		packagestotal = resultset.fieldByName('total');
 	}
@@ -286,7 +286,7 @@ Taxonom.prototype.updatePackages = function(_args) {
 		},
 		ondatastream : function(_e) {
 			_args.listitem.progress.value = _e.progress;
-			_args.section.updateItemAt(_args.ndx, _args.listitem)
+			_args.section.updateItemAt(_args.ndx, _args.listitem);
 		},
 		onload : function() {
 			console.log('download finished ' + _args.ndx);
@@ -296,7 +296,7 @@ Taxonom.prototype.updatePackages = function(_args) {
 			} catch (E) {
 				console.log(url);
 				console.log(E);
-				return
+				return;
 			}
 			self.dblink.execute('DELETE  FROM  images WHERE dichotomid="' + package_id + '"');
 			self.dblink.execute('DELETE  FROM  dichotoms WHERE dichotomid="' + package_id + '"');
@@ -327,7 +327,7 @@ Taxonom.prototype.updatePackages = function(_args) {
 			console.log(_args);
 			_args.listview.progress.visible = false;
 			_args.listitem.properties.accessoryType = Ti.UI.LIST_ACCESSORY_TYPE_DETAIL;
-			_args.section.updateItemAt(_args.ndx, _args.listitem)
+			_args.section.updateItemAt(_args.ndx, _args.listitem);
 		}
 	});
 	xhr.open('GET', url);
@@ -364,12 +364,12 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 	} else {
 		if (options.decision_id.match(/_decisiontree/i)) {// new tree
 			options.currenttree_id = options.decision_id + '_';
-			console.log('next_id was  new treeId ' + options.currenttree_id)
+			console.log('next_id was  new treeId ' + options.currenttree_id);
 			options.decision_id = undefined;
 		}
 	}
 	console.log('........After testing if we change to other tree');
-	console.log(options)
+	console.log(options);
 	console.log('........Determining next decisionid');
 
 	var q = 'SELECT decision, decisionid FROM decisions WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '"';
@@ -377,7 +377,7 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 		q += ' AND decisionid ="' + options.decision_id + '"';
 	}
 	q += ' LIMIT 0,1';
-	console.log(q)
+	console.log(q);
 	var resultset = this.dblink.execute(q);
 	if (resultset.isValidRow()) {
 		console.log('==> next decision found');
@@ -388,7 +388,7 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 		resultset.close();
 		// getting meta from currenttree
 		var q = 'SELECT meta FROM decisiontrees WHERE dichotomid = "' + options.package_id + '" AND treeid="' + options.currenttree_id + '"';
-		console.log(q)
+		console.log(q);
 		var resultset = this.dblink.execute(q);
 		if (resultset.isValidRow()) {
 			options.meta = JSON.parse(resultset.fieldByName('meta'));
@@ -413,7 +413,7 @@ Taxonom.prototype.getDecisionById = function(_args, _onsuccess) {
 			console.log(decisionid);
 			options.name = decisionid.split('_decision_')[1];
 			resultset.close();
-			_onsuccess(options)
+			_onsuccess(options);
 		}
 	}
 };

@@ -1,28 +1,27 @@
 exports.create = function(_args) {
-	if (!_args.package || !_args.package.Title) {
-		console.log('Warning: missing Title of package');
+	if (!_args.paket || !_args.paket.Title) {
+		console.log('Warning: missing Title of paket');
 		return null;
 	}
-	_args.package.id = Ti.Utils.md5HexDigest(_args.package.Title);
-	console.log('listitem build:   ' + _args.package.id);
+	_args.paket.id = Ti.Utils.md5HexDigest(_args.paket.Title);
+	console.log('listitem build:   ' + _args.paket.id);
 	var self = {
 		properties : {
-			itemId : _args.package.id,
+			itemId : _args.paket.id,
 			accessoryType : Ti.UI.LIST_ACCESSORY_TYPE_DETAIL
 		},
 		pic_url : {
-			image : (_args.package.IconURL) ? _args.package.IconURL : ''
+			image : (_args.paket.IconURL) ? _args.paket.IconURL : ''
 		},
-		package_name : {
-			text : _args.package.Title.entities2utf8().replace(/\(.*?\)/,'')
+		paket_name : {
+			text : _args.paket.Title.entities2utf8().replace(/\(.*?\)/,'')
 		},
 		meta_text : {
 			text : 'Metaangaben zum Paket'
 		}
 	};
-
 	Ti.App.Taxo.getPackageInfo({
-		package : _args.package,
+		paket : _args.paket,
 		listitem : self
 	});
 	return self;

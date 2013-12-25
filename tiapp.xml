@@ -26,14 +26,35 @@
             <orientation>Ti.UI.UPSIDE_PORTRAIT</orientation>
         </orientations>
     </iphone>
-    <mobileweb>
-        <precache/>
-        <splash>
-            <enabled>true</enabled>
-            <inline-css-images>true</inline-css-images>
-        </splash>
-        <theme>default</theme>
-    </mobileweb>
+     <android xmlns:android="http://schemas.android.com/apk/res/android">
+        <!-- <uses-sdk android:minSdkVersion="10" android:targetSdkVersion="19"/>-->
+        <manifest android:versionCode="1" android:versionName="1.1"
+            package="de.appwerft.naturlotse" xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+            <application>
+                <activity android:configChanges="keyboardHidden"
+                    android:name="org.appcelerator.titanium.TiActivity" android:screenOrientation="portrait"/>
+                <activity android:configChanges="keyboardHidden"
+                    android:name="org.appcelerator.titanium.TiTranslucentActivity"
+                    android:screenOrientation="portrait" android:theme="@android:style/Theme.Translucent"/>
+                <activity android:configChanges="keyboardHidden"
+                    android:name="org.appcelerator.titanium.TiModalActivity"
+                    android:screenOrientation="portrait" android:theme="@android:style/Theme.Translucent"/>
+                <activity android:configChanges="keyboardHidden"
+                    android:name="ti.modules.titanium.ui.TiTabActivity" android:screenOrientation="portrait"/>
+                <activity android:name="ti.modules.titanium.ui.android.TiPreferencesActivity"/>
+                <service android:exported="false" android:name="org.appcelerator.titanium.analytics.TiAnalyticsService"/>
+                <activity android:configChanges="keyboardHidden"
+                    android:label=""
+                    android:name="ti.modules.titanium.media.TiVideoActivity"
+                    android:screenOrientation="landscape" android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
+                <activity android:configChanges="keyboardHidden"
+                    android:name="org.appcelerator.titanium.TiActivity" android:screenOrientation="portrait"/>
+            </application>
+        </manifest>
+    </android>
     <modules/>
     <deployment-targets>
         <target device="android">true</target>
@@ -43,6 +64,6 @@
         <target device="mobileweb">false</target>
         <target device="tizen">false</target>
     </deployment-targets>
-    <sdk-version>3.3.0.v20131210191417</sdk-version>
+    <sdk-version>3.2.0.GA</sdk-version>
     <property name="ti.deploytype">test</property>
 </ti:app>

@@ -11,10 +11,11 @@ exports.create = function(event) {
 			bindId : 'pic_url',
 			bubbleParent : false,
 			properties : {
-				width : '100dip',
+				width : '70dp',
 				height : 'auto',
-				top : '10dip',
-				left : '-10dip'
+				top : '5dp',
+				bottom: '5dp',
+				left : '5dip'
 			},
 			events : {
 				'click' : event
@@ -25,16 +26,15 @@ exports.create = function(event) {
 				width : Ti.UI.FILL,
 				layout : 'vertical',
 				bubbleParent : false,
-				left : '90dip',
+				left : '90dp',
 				height : Ti.UI.SIZE,
-				top : '5dip',
-				bottom : '5dip',
-				right : '20dip',
+				top : '5dp',
+				bottom : '5dp',
+				right : '20dp',
 			},
-
 			childTemplates : [{
 				type : 'Ti.UI.Label',
-				bindId : 'package_name',
+				bindId : 'paket_name',
 				events : {
 					'click' : event
 				},
@@ -44,7 +44,7 @@ exports.create = function(event) {
 					height : Ti.UI.SIZE,
 					bubbleParent : false,
 					font : {
-						fontSize : '18dip',
+						fontSize : '18dp',
 						fontFamily : 'OpenBaskerville0.0.75'
 					},
 					left : 0,
@@ -61,13 +61,13 @@ exports.create = function(event) {
 					height : Ti.UI.SIZE,
 					bubbleParent : false,
 					font : {
-						fontSize : '13dip',
+						fontSize : '15dp',
 						fontFamily : 'OpenBaskerville0.0.75'
 					},
 					left : 0,
-					top : '5dip'
+					top : '5dp'
 				}
 			}]
 		}]
 	};
-}
+};
